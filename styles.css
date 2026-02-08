@@ -736,15 +736,19 @@ section { scroll-margin-top: 96px; }
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
   padding: 1rem;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .dialog-overlay.is-open {
-  display: flex;
+  visibility: visible;
+  opacity: 1;
 }
 
 .dialog-content {
