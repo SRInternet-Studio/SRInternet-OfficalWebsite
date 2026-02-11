@@ -298,8 +298,8 @@ button {
   position: relative;
   padding: 6rem 0 4rem;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(15, 20, 25, 0.85)),
-              url('images/hero-bg.png') right center/cover no-repeat;
+  background: linear-gradient(90deg, rgba(15, 20, 25, 0.95) 0%, rgba(15, 20, 25, 0.85) 40%, rgba(15, 20, 25, 0.6) 70%, transparent 100%),
+              url('images/hero-bg.png') center/cover no-repeat;
 }
 
 .hero .container.hero-grid {
@@ -310,7 +310,7 @@ button {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 50%, rgba(20, 184, 166, 0.05), transparent 50%);
+  background: radial-gradient(circle at 25% 50%, rgba(10, 14, 26, 0.3), transparent 60%);
   pointer-events: none;
 }
 
@@ -320,7 +320,9 @@ button {
   gap: 2.5rem;
   align-items: center;
   z-index: 1;
-  max-width: 600px;
+  max-width: 580px;
+  margin: 0;
+  margin-left: max(1rem, calc((100% - var(--max-width)) / 2));
 }
 
 .hero-copy {
@@ -399,7 +401,7 @@ button {
     padding: 7rem 0 5rem;
   }
   .hero-grid {
-    max-width: 650px;
+    max-width: 620px;
   }
 }
 
