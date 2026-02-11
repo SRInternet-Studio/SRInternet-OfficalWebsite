@@ -316,6 +316,8 @@ button {
   align-items: center;
   z-index: 1;
   max-width: 580px;
+  margin: 0;
+  margin-left: max(1rem, calc((100% - var(--max-width)) / 2));
 }
 
 .hero-copy h1 {
