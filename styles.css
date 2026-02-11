@@ -302,6 +302,11 @@ button {
               url('images/hero-bg.png') right center/cover no-repeat;
 }
 
+.hero .container.hero-grid {
+  margin-left: clamp(1.5rem, 5vw, 4rem);
+  margin-right: auto;
+}
+
 .hero-overlay {
   position: absolute;
   inset: 0;
@@ -316,6 +321,10 @@ button {
   align-items: center;
   z-index: 1;
   max-width: 600px;
+}
+
+.hero-copy {
+  text-align: left;
 }
 
 .hero-copy h1 {
@@ -338,6 +347,7 @@ button {
   flex-wrap: wrap;
   gap: 0.85rem;
   margin-top: 1.5rem;
+  justify-content: flex-start;
 }
 
 .hero-card {
