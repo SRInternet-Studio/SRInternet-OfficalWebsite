@@ -230,7 +230,7 @@ function renderIframeAd(ad) {
   iframe.src = ad.url;
   iframe.title = ad.title || '赞助商内容';
   iframe.setAttribute('loading', 'lazy');
-  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+  iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups');
   
   adContent.appendChild(iframe);
 }
