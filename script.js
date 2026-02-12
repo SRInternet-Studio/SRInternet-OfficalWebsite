@@ -148,17 +148,20 @@ const adConfig = {
   // Enable/disable the ad system
   enabled: true,
   
+  // API endpoint for fetching ads (set to null to use fallback)
+  apiEndpoint: '/api/ads',
+  
   // Expiry date for automatic hiding (February 27, 2026)
   expiryDate: new Date('2026-02-27T23:59:59+08:00'),
   
-  // Current ad data (will be replaced by Feishu API in the future)
-  currentAd: {
+  // Fallback ad data (used when API is unavailable)
+  fallbackAd: {
     id: 'sponsor-gift-coludai',
     type: 'iframe', // 'iframe', 'banner', 'card'
     priority: 'high', // 'high', 'medium', 'low'
     url: 'https://gift.coludai.cn',
     title: '赞助商 - Gift Coludai',
-    description: '感谢赞助商的支持',
+    content: '感谢赞助商的支持',
     startDate: new Date('2026-01-01T00:00:00+08:00'),
     endDate: new Date('2026-02-27T23:59:59+08:00')
   }
@@ -199,6 +202,11 @@ function shouldShowAd(ad) {
  */
 function renderAd(ad) {
   if (!adContent || !adWrapper) return;
+  
+  // Store current ad ID for close button
+  if (adSection) {
+    adSection.dataset.currentAdId = ad.id;
+  }
   
   // Clear previous content
   adContent.innerHTML = '';
@@ -297,7 +305,7 @@ function renderCardAd(ad) {
   
   // Add description
   const description = document.createElement('p');
-  description.textContent = ad.description || '';
+  description.textContent = ad.content || ad.description || '';
   contentDiv.appendChild(description);
   
   // Add link button
@@ -322,20 +330,32 @@ function renderCardAd(ad) {
 /**
  * Initialize the advertisement system
  */
-function initAdSystem() {
+async function initAdSystem() {
   if (!adSection) return;
   
-  const ad = adConfig.currentAd;
-  
-  // Check if ad should be shown
-  if (shouldShowAd(ad)) {
-    renderAd(ad);
-    adSection.classList.add('is-visible');
+  try {
+    // Fetch ads from API
+    const ads = await fetchAdsFromFeishu();
+    
+    // Filter ads that should be shown
+    const visibleAds = ads.filter(ad => shouldShowAd(ad));
+    
+    // Sort by priority
+    const sortedAds = sortAdsByPriority(visibleAds);
+    
+    // Display the first ad if available
+    if (sortedAds.length > 0) {
+      renderAd(sortedAds[0]);
+      adSection.classList.add('is-visible');
+    }
+  } catch (error) {
+    console.error('Failed to initialize ad system:', error);
   }
   
   // Handle close button
   if (adCloseBtn) {
     adCloseBtn.addEventListener('click', () => {
+      const ad = adSection.dataset.currentAdId;
       const hideAdSection = () => {
         adSection.classList.remove('is-visible');
       };
@@ -365,8 +385,8 @@ function initAdSystem() {
           }
         }
 
-        if (!closedAds.includes(ad.id)) {
-          closedAds.push(ad.id);
+        if (ad && !closedAds.includes(ad)) {
+          closedAds.push(ad);
           sessionStorage.setItem('closedAds', JSON.stringify(closedAds));
         }
       } catch (e) {
@@ -387,37 +407,66 @@ if (document.readyState === 'loading') {
 }
 
 /**
- * Future API integration function (placeholder)
- * This function will fetch ad data from Feishu API
+ * Fetch advertisements from backend API
+ * @returns {Promise<Array>} Array of ad objects
  */
 async function fetchAdsFromFeishu() {
-  // TODO: Implement Feishu API integration
-  // const response = await fetch('FEISHU_API_ENDPOINT');
-  // const data = await response.json();
-  // return processFeishuData(data);
+  // If API endpoint is not configured, use fallback
+  if (!adConfig.apiEndpoint) {
+    console.log('API endpoint not configured, using fallback ad');
+    return [adConfig.fallbackAd];
+  }
   
-  // For now, return current static config
-  return [adConfig.currentAd];
+  try {
+    const response = await fetch(adConfig.apiEndpoint, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      // Add timeout
+      signal: AbortSignal.timeout(5000)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success || !Array.isArray(data.data)) {
+      throw new Error('Invalid API response format');
+    }
+    
+    // If no ads returned, use fallback
+    if (data.data.length === 0) {
+      console.log('No ads from API, using fallback');
+      return [adConfig.fallbackAd];
+    }
+    
+    // Process dates
+    return data.data.map(ad => ({
+      ...ad,
+      startDate: ad.startDate ? new Date(ad.startDate) : null,
+      endDate: ad.endDate ? new Date(ad.endDate) : null
+    }));
+  } catch (error) {
+    console.error('Failed to fetch ads from API:', error);
+    // Fallback to default ad on error
+    return [adConfig.fallbackAd];
+  }
 }
 
 /**
- * Process Feishu API data to ad format
- * @param {Object} data - Raw Feishu data
- * @returns {Array} - Processed ad objects
+ * Sort ads by priority
+ * @param {Array} ads - Array of ad objects
+ * @returns {Array} Sorted ads
  */
-function processFeishuData(data) {
-  // TODO: Transform Feishu multi-dimensional table data to ad format
-  // Example structure:
-  // {
-  //   id: string,
-  //   type: 'iframe' | 'banner' | 'card',
-  //   priority: 'high' | 'medium' | 'low',
-  //   url: string,
-  //   title: string,
-  //   description: string,
-  //   imageUrl: string,
-  //   startDate: Date,
-  //   endDate: Date
-  // }
-  return [];
+function sortAdsByPriority(ads) {
+  const priorityOrder = { high: 3, medium: 2, low: 1 };
+  
+  return ads.slice().sort((a, b) => {
+    const aPriority = priorityOrder[a.priority] || 0;
+    const bPriority = priorityOrder[b.priority] || 0;
+    return bPriority - aPriority;
+  });
 }
