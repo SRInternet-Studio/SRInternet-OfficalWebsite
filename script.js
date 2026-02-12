@@ -183,8 +183,12 @@ function shouldShowAd(ad) {
   if (ad.endDate && now > ad.endDate) return false;
   
   // Check if user has closed this ad (stored in sessionStorage)
-  const closedAds = JSON.parse(sessionStorage.getItem('closedAds') || '[]');
-  if (closedAds.includes(ad.id)) return false;
+  try {
+    const closedAds = JSON.parse(sessionStorage.getItem('closedAds') || '[]');
+    if (Array.isArray(closedAds) && closedAds.includes(ad.id)) return false;
+  } catch (e) {
+    // Ignore storage/parse errors, continue showing the ad
+  }
   
   return true;
 }
@@ -242,6 +246,12 @@ function renderIframeAd(ad) {
 function renderBannerAd(ad) {
   adContent.classList.add('ad-type-banner');
   
+  // Check if imageUrl is provided
+  if (!ad.imageUrl) {
+    console.warn('Banner ad missing imageUrl, skipping render');
+    return;
+  }
+  
   const link = document.createElement('a');
   link.href = ad.url;
   link.target = '_blank';
@@ -263,20 +273,50 @@ function renderBannerAd(ad) {
 function renderCardAd(ad) {
   adContent.classList.add('ad-type-card');
   
-  const cardHTML = `
-    <div class="ad-card">
-      ${ad.imageUrl ? `<img src="${ad.imageUrl}" alt="${ad.title || '赞助商'}" loading="lazy">` : ''}
-      <div class="ad-card-content">
-        <h3>${ad.title || '赞助商'}</h3>
-        <p>${ad.description || ''}</p>
-        <a href="${ad.url}" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
-          了解更多 <i class="fas fa-arrow-right" aria-hidden="true"></i>
-        </a>
-      </div>
-    </div>
-  `;
+  // Create card container
+  const cardDiv = document.createElement('div');
+  cardDiv.className = 'ad-card';
   
-  adContent.innerHTML = cardHTML;
+  // Add image if provided
+  if (ad.imageUrl) {
+    const img = document.createElement('img');
+    img.src = ad.imageUrl;
+    img.alt = ad.title || '赞助商';
+    img.loading = 'lazy';
+    cardDiv.appendChild(img);
+  }
+  
+  // Create card content
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'ad-card-content';
+  
+  // Add title
+  const title = document.createElement('h3');
+  title.textContent = ad.title || '赞助商';
+  contentDiv.appendChild(title);
+  
+  // Add description
+  const description = document.createElement('p');
+  description.textContent = ad.description || '';
+  contentDiv.appendChild(description);
+  
+  // Add link button
+  const link = document.createElement('a');
+  link.href = ad.url;
+  link.className = 'btn btn-primary';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = '了解更多 ';
+  
+  const icon = document.createElement('i');
+  icon.className = 'fas fa-arrow-right';
+  icon.setAttribute('aria-hidden', 'true');
+  link.appendChild(icon);
+  
+  contentDiv.appendChild(link);
+  cardDiv.appendChild(contentDiv);
+  
+  adContent.appendChild(cardDiv);
 }
 
 /**
