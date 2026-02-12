@@ -296,15 +296,45 @@ function initAdSystem() {
   // Handle close button
   if (adCloseBtn) {
     adCloseBtn.addEventListener('click', () => {
-      // Store closed ad ID in sessionStorage
-      const closedAds = JSON.parse(sessionStorage.getItem('closedAds') || '[]');
-      if (!closedAds.includes(ad.id)) {
-        closedAds.push(ad.id);
-        sessionStorage.setItem('closedAds', JSON.stringify(closedAds));
+      const hideAdSection = () => {
+        adSection.classList.remove('is-visible');
+      };
+
+      try {
+        // Guard against unavailable or blocked sessionStorage
+        if (typeof window === 'undefined' || !window.sessionStorage) {
+          hideAdSection();
+          return;
+        }
+
+        const storedValue = sessionStorage.getItem('closedAds');
+        let closedAds;
+
+        if (storedValue == null || storedValue === '') {
+          closedAds = [];
+        } else {
+          try {
+            closedAds = JSON.parse(storedValue);
+          } catch (e) {
+            // Malformed JSON, reset to empty list
+            closedAds = [];
+          }
+
+          if (!Array.isArray(closedAds)) {
+            closedAds = [];
+          }
+        }
+
+        if (!closedAds.includes(ad.id)) {
+          closedAds.push(ad.id);
+          sessionStorage.setItem('closedAds', JSON.stringify(closedAds));
+        }
+      } catch (e) {
+        // Ignore storage errors and fall back to just hiding the ad
+      } finally {
+        // Always hide the ad section, even if storage fails
+        hideAdSection();
       }
-      
-      // Hide the ad section
-      adSection.classList.remove('is-visible');
     });
   }
 }
