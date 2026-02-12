@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>广告系统测试 - Advertisement System Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .ad-preview {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .test-ad {
+            border: 2px solid #007bff;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 广告系统集成测试 (Advertisement System Integration Test)</h1>
+    
+    <div class="test-section">
+        <h2>1. API 连接测试 (API Connection Test)</h2>
+        <button onclick="testAPIConnection()">测试 API 连接</button>
+        <div id="api-status"></div>
+        <pre id="api-response"></pre>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 广告类型预览 (Ad Type Previews)</h2>
+        <p>测试三种广告类型的渲染效果</p>
+        
+        <h3>Card 类型 (Card Type)</h3>
+        <div class="test-ad">
+            <button onclick="renderTestAd('card')">渲染 Card 广告</button>
+            <div class="ad-preview" id="card-preview"></div>
+        </div>
+        
+        <h3>Banner 类型 (Banner Type)</h3>
+        <div class="test-ad">
+            <button onclick="renderTestAd('banner')">渲染 Banner 广告</button>
+            <div class="ad-preview" id="banner-preview"></div>
+        </div>
+        
+        <h3>Iframe 类型 (Iframe Type)</h3>
+        <div class="test-ad">
+            <button onclick="renderTestAd('iframe')">渲染 Iframe 广告</button>
+            <div class="ad-preview" id="iframe-preview"></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 数据过滤测试 (Data Filtering Test)</h2>
+        <button onclick="testDateFiltering()">测试日期过滤</button>
+        <div id="filter-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 优先级排序测试 (Priority Sorting Test)</h2>
+        <button onclick="testPrioritySorting()">测试优先级排序</button>
+        <div id="priority-status"></div>
+    </div>
+
+    <script>
+        // Test data
+        const testAds = {
+            card: {
+                id: 'test-card-001',
+                type: 'card',
+                priority: 'high',
+                url: 'https://example.com',
+                title: '测试卡片广告',
+                content: '这是一个测试卡片广告的描述内容，展示赞助商信息。',
+                imageUrl: 'https://via.placeholder.com/300x200?text=Test+Card+Image',
+                tag: '测试赞助商'
+            },
+            banner: {
+                id: 'test-banner-001',
+                type: 'banner',
+                priority: 'medium',
+                url: 'https://example.com',
+                title: '测试横幅广告',
+                imageUrl: 'https://via.placeholder.com/728x90?text=Test+Banner+Ad',
+                tag: '测试横幅'
+            },
+            iframe: {
+                id: 'test-iframe-001',
+                type: 'iframe',
+                priority: 'low',
+                url: 'https://example.com',
+                title: '测试 Iframe 广告',
+                tag: '测试 Iframe'
+            }
+        };
+
+        // Test API connection
+        async function testAPIConnection() {
+            const statusDiv = document.getElementById('api-status');
+            const responseDiv = document.getElementById('api-response');
+            
+            statusDiv.innerHTML = '<div class="status warning">⏳ 正在测试...</div>';
+            
+            try {
+                // Test health endpoint
+                const healthResponse = await fetch('/api/ads');
+                const healthData = await healthResponse.json();
+                
+                if (healthResponse.ok) {
+                    statusDiv.innerHTML = '<div class="status success">✓ API 连接成功！</div>';
+                    responseDiv.textContent = JSON.stringify(healthData, null, 2);
+                } else {
+                    statusDiv.innerHTML = `<div class="status warning">⚠ API 返回错误状态: ${healthResponse.status}<br>这可能是因为使用了测试凭证</div>`;
+                    responseDiv.textContent = JSON.stringify(healthData, null, 2);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">✗ API 连接失败: ${error.message}<br>请确保后端服务器正在运行</div>`;
+                responseDiv.textContent = error.stack;
+            }
+        }
+
+        // Render test ad
+        function renderTestAd(type) {
+            const previewDiv = document.getElementById(`${type}-preview`);
+            const ad = testAds[type];
+            
+            previewDiv.innerHTML = '';
+            
+            switch (type) {
+                case 'card':
+                    previewDiv.innerHTML = `
+                        <div style="display: flex; gap: 20px; align-items: center;">
+                            <img src="${ad.imageUrl}" alt="${ad.title}" style="max-width: 300px; border-radius: 8px;">
+                            <div>
+                                <h3>${ad.title}</h3>
+                                <p>${ad.content}</p>
+                                <a href="${ad.url}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">了解更多 →</a>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'banner':
+                    previewDiv.innerHTML = `
+                        <a href="${ad.url}" target="_blank">
+                            <img src="${ad.imageUrl}" alt="${ad.title}" style="max-width: 100%; display: block;">
+                        </a>
+                    `;
+                    break;
+                    
+                case 'iframe':
+                    previewDiv.innerHTML = `
+                        <iframe src="${ad.url}" 
+                                title="${ad.title}" 
+                                style="width: 100%; height: 400px; border: 1px solid #ddd; border-radius: 4px;"
+                                sandbox="allow-scripts allow-forms allow-popups">
+                        </iframe>
+                    `;
+                    break;
+            }
+        }
+
+        // Test date filtering
+        function testDateFiltering() {
+            const statusDiv = document.getElementById('filter-status');
+            const now = new Date();
+            
+            const testCases = [
+                {
+                    name: '未来广告（应该不显示）',
+                    ad: { startDate: new Date(now.getTime() + 86400000) },
+                    expected: false
+                },
+                {
+                    name: '过期广告（应该不显示）',
+                    ad: { endDate: new Date(now.getTime() - 86400000) },
+                    expected: false
+                },
+                {
+                    name: '活跃广告（应该显示）',
+                    ad: { 
+                        startDate: new Date(now.getTime() - 86400000),
+                        endDate: new Date(now.getTime() + 86400000)
+                    },
+                    expected: true
+                }
+            ];
+            
+            let html = '<h4>测试结果：</h4><ul>';
+            let allPassed = true;
+            
+            testCases.forEach(testCase => {
+                const result = shouldShowAd(testCase.ad);
+                const passed = result === testCase.expected;
+                allPassed = allPassed && passed;
+                
+                html += `<li style="color: ${passed ? 'green' : 'red'}">
+                    ${passed ? '✓' : '✗'} ${testCase.name}: ${passed ? '通过' : '失败'}
+                </li>`;
+            });
+            
+            html += '</ul>';
+            html = `<div class="status ${allPassed ? 'success' : 'error'}">${html}</div>`;
+            statusDiv.innerHTML = html;
+        }
+        
+        // Simple shouldShowAd for testing
+        function shouldShowAd(ad) {
+            const now = new Date();
+            if (ad.startDate && now < ad.startDate) return false;
+            if (ad.endDate && now > ad.endDate) return false;
+            return true;
+        }
+
+        // Test priority sorting
+        function testPrioritySorting() {
+            const statusDiv = document.getElementById('priority-status');
+            
+            const unsortedAds = [
+                { id: '1', priority: 'low', title: 'Low Priority' },
+                { id: '2', priority: 'high', title: 'High Priority' },
+                { id: '3', priority: 'medium', title: 'Medium Priority' },
+                { id: '4', priority: 'high', title: 'Another High' }
+            ];
+            
+            const sorted = sortAdsByPriority(unsortedAds);
+            
+            let html = '<h4>排序结果：</h4><ol>';
+            sorted.forEach(ad => {
+                html += `<li>${ad.title} (${ad.priority})</li>`;
+            });
+            html += '</ol>';
+            
+            const correctOrder = sorted[0].priority === 'high' && 
+                                sorted[1].priority === 'high' &&
+                                sorted[2].priority === 'medium' &&
+                                sorted[3].priority === 'low';
+            
+            html = `<div class="status ${correctOrder ? 'success' : 'error'}">${html}</div>`;
+            statusDiv.innerHTML = html;
+        }
+        
+        function sortAdsByPriority(ads) {
+            const priorityOrder = { high: 3, medium: 2, low: 1 };
+            return ads.slice().sort((a, b) => {
+                const aPriority = priorityOrder[a.priority] || 0;
+                const bPriority = priorityOrder[b.priority] || 0;
+                return bPriority - aPriority;
+            });
+        }
+    </script>
+</body>
+</html>
