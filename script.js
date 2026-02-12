@@ -355,7 +355,7 @@ async function initAdSystem() {
   // Handle close button
   if (adCloseBtn) {
     adCloseBtn.addEventListener('click', () => {
-      const ad = adSection.dataset.currentAdId;
+      const adId = adSection.dataset.currentAdId;
       const hideAdSection = () => {
         adSection.classList.remove('is-visible');
       };
@@ -385,8 +385,8 @@ async function initAdSystem() {
           }
         }
 
-        if (ad && !closedAds.includes(ad)) {
-          closedAds.push(ad);
+        if (adId && !closedAds.includes(adId)) {
+          closedAds.push(adId);
           sessionStorage.setItem('closedAds', JSON.stringify(closedAds));
         }
       } catch (e) {

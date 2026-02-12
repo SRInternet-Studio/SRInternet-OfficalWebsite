@@ -185,7 +185,7 @@ function filterAds(ads) {
 function sortAdsByPriority(ads) {
   const priorityOrder = { high: 3, medium: 2, low: 1 };
   
-  return ads.sort((a, b) => {
+  return ads.slice().sort((a, b) => {
     const aPriority = priorityOrder[a.priority] || 0;
     const bPriority = priorityOrder[b.priority] || 0;
     return bPriority - aPriority;
