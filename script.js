@@ -187,7 +187,7 @@ function shouldShowAd(ad) {
     const closedAds = JSON.parse(sessionStorage.getItem('closedAds') || '[]');
     if (Array.isArray(closedAds) && closedAds.includes(ad.id)) return false;
   } catch (e) {
-    // Ignore storage/parse errors, continue showing the ad
+    // Ignore storage access failures and JSON parse errors, continue showing the ad
   }
   
   return true;
@@ -248,7 +248,7 @@ function renderBannerAd(ad) {
   
   // Check if imageUrl is provided
   if (!ad.imageUrl) {
-    console.warn('Banner ad missing imageUrl, skipping render');
+    console.warn(`Banner ad (ID: ${ad.id}) missing imageUrl, skipping render`);
     return;
   }
   
