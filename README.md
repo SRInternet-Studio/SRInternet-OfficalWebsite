@@ -5,6 +5,7 @@ SR思锐 团队官网的静态站点，展示团队的青少年编程教育项�
 
 ## 主要特性
 - 首页含英雄区、产品卡片、社区入口、团队介绍与联系方式
+- **🆕 动态广告系统**：通过飞书多维表格 API 获取赞助商广告（详见 `AD_SYSTEM_README.md`）
 - 无依赖构建流程，直接打开 `index.html` 即可浏览
 - 响应式布局与辅助功能（导航折叠、滚动样式、跳转到内容）
 - 第三方静态资源：Font Awesome、Google Fonts CDN
@@ -13,10 +14,16 @@ SR思锐 团队官网的静态站点，展示团队的青少年编程教育项�
 ## 仓库结构
 - `index.html`：主站页面
 - `styles.css`：全站样式
-- `script.js`：导航折叠、滚动状态、年份更新等交互
+- `script.js`：导航折叠、滚动状态、年份更新、广告系统等交互
 - `privacy.html` / `service.html`：隐私政策与使用条款
+- `api/`：**广告 API 后端服务器**（Node.js + Express）
+  - `server.js`：飞书 API 集成服务
+  - `package.json`：依赖配置
+  - `README.md`：API 文档
 - `images/`：站点配图与图标
 - `sounds/`：音频资源（如 `rbc.mp3`）
+- `AD_SYSTEM_README.md`：广告系统详细文档
+- `IMPLEMENTATION.md`：飞书集成实现说明
 - 其他静态资源：`404.html` 等
 
 ## 本地预览
@@ -25,10 +32,19 @@ SR思锐 团队官网的静态站点，展示团队的青少年编程教育项�
 git clone <repo-url>
 cd SRInternet-Studio
 
-# 方式 1：直接双击 index.html 用浏览器打开
+# 方式 1：直接双击 index.html 用浏览器打开（广告系统将使用备用数据）
 # 方式 2：启动本地静态服务（示例使用 Python）
 python -m http.server 8080
 # 然后访问 http://localhost:8080
+
+# 方式 3：完整体验（包括广告 API）
+# 启动后端 API 服务器
+cd api
+npm install
+npm start
+# 在另一个终端启动前端
+cd ..
+python -m http.server 8080
 ```
 
 ## 部署建议
@@ -52,6 +68,7 @@ A static website for the SR Studio (SR思锐 团队) showcasing youth-focused co
 
 ## Features
 - Hero, product highlights, community links, about, and contact sections
+- **🆕 Dynamic Ad System**: Fetches sponsor ads from Feishu multi-dimensional table API (see `AD_SYSTEM_README.md`)
 - Zero-build workflow; open `index.html` directly
 - Responsive layout with accessible navigation toggle and skip link
 - External assets via Font Awesome and Google Fonts CDNs
