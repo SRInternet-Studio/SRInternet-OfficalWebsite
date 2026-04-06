@@ -299,12 +299,14 @@ button {
   padding: 6rem 0 4rem;
   overflow: hidden;
   background: linear-gradient(90deg, rgba(15, 20, 25, 0.95) 0%, rgba(15, 20, 25, 0.85) 40%, rgba(15, 20, 25, 0.6) 70%, transparent 100%),
-              url('images/hero-bg.png') center/cover no-repeat;
+              url('images/hero-bg.png') calc(50% + clamp(6rem, 25vw, 20rem)) center / cover no-repeat;
+  margin: 2rem 0 0 clamp(2.5rem, 8vw, 8rem);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
 }
 
 .hero .container.hero-grid {
-  margin-left: clamp(1.5rem, 5vw, 4rem);
-  margin-right: auto;
+  margin-left: clamp(4rem, 12vw, 12rem);
+  margin-right: clamp(1.25rem, 4vw, 3rem);
 }
 
 .hero-overlay {
@@ -495,6 +497,12 @@ button {
   object-fit: cover;
 }
 
+.card-featured img {
+  width: 100%;
+  aspect-ratio: auto;
+  height: auto;
+}
+
 .card-body {
   padding: 1.25rem;
 }
@@ -508,7 +516,6 @@ button {
 }
 
 .card:hover {
-  transform: translateY(-2px);
   border-color: rgba(99, 102, 241, 0.25);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
 }
@@ -579,6 +586,160 @@ button {
 }
 
 .text-link i { font-size: 0.9rem; }
+
+/* Community 社区重构 */
+.community-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.community-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  background: rgba(15, 20, 25, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 1;
+}
+
+.community-card:hover {
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+  background: rgba(20, 25, 30, 0.7);
+}
+
+.community-card.bilibili-card:hover {
+  border-color: rgba(251, 114, 153, 0.5);
+}
+
+.community-card.github-card:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.community-card.qq-card:hover {
+  border-color: rgba(0, 153, 255, 0.5);
+}
+
+.card-bg-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.community-card:hover .card-bg-glow {
+  opacity: 1;
+}
+
+.bilibili-card .card-bg-glow {
+  background: radial-gradient(circle at center, rgba(251, 114, 153, 0.1) 0%, transparent 50%);
+}
+
+.github-card .card-bg-glow {
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+}
+
+.qq-card .card-bg-glow {
+  background: radial-gradient(circle at center, rgba(0, 153, 255, 0.1) 0%, transparent 50%);
+}
+
+.community-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.bilibili-card .community-icon {
+  background: rgba(251, 114, 153, 0.1);
+  color: #fb7299;
+}
+.bilibili-card:hover .community-icon {
+  background: #fb7299;
+  color: #fff;
+}
+
+.github-card .community-icon {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+.github-card:hover .community-icon {
+  background: #fff;
+  color: #000;
+}
+
+.qq-card .community-icon {
+  background: rgba(0, 153, 255, 0.1);
+  color: #0099ff;
+}
+.qq-card:hover .community-icon {
+  background: #0099ff;
+  color: #fff;
+}
+
+.community-content {
+  flex-grow: 1;
+  margin-bottom: 2rem;
+}
+
+.community-content h3 {
+  font-size: 1.25rem;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.community-content p {
+  font-size: 0.95rem;
+  color: var(--text-200);
+  line-height: 1.6;
+}
+
+.community-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-100);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 1rem;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.community-action i {
+  transition: transform 0.2s ease;
+}
+
+.community-card:hover .community-action {
+  color: #fff;
+}
+
+.community-card:hover .community-action i {
+  transform: translateX(4px);
+}
+
+.bilibili-card:hover .community-action { border-top-color: rgba(251, 114, 153, 0.2); }
+.github-card:hover .community-action { border-top-color: rgba(255, 255, 255, 0.15); }
+.qq-card:hover .community-action { border-top-color: rgba(0, 153, 255, 0.2); }
 
 /* About 与团队 */
 .about-grid {
@@ -744,6 +905,7 @@ section { scroll-margin-top: 96px; }
 }
 
 /* 动画与偏好 */
+/* 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -752,6 +914,7 @@ section { scroll-margin-top: 96px; }
     scroll-behavior: auto !important;
   }
 }
+*/
 
 /* Join Us Dialog */
 .dialog-overlay {
