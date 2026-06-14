@@ -1,119 +1,59 @@
-# Advertisement API Server
+# Advertisement API (PHP)
 
-基于 Node.js 和 Express 的广告 API 服务器，用于从飞书多维表格获取广告数据。
+基于原生 PHP 的广告接口，用于从飞书多维表格获取赞助商广告数据，不再依赖 Node.js。
 
-## 功能特性
+## 文件说明
 
-- 🔐 安全的飞书 API 集成（凭证存储在服务器端）
-- 📊 从飞书多维表格获取广告数据
-- ⚡ 访问令牌自动缓存和刷新
-- 🔄 支持分页获取大量记录
-- ✅ 自动过滤和验证广告数据
-- 📈 按优先级排序广告
-- 🌐 CORS 支持
-- 🏥 健康检查端点
+- `ads.php`：广告列表与单条广告接口
+- `health.php`：健康检查接口
+- `common.php`：环境变量加载、飞书请求、令牌缓存、字段映射与过滤排序
+- `.env.example`：环境变量模板
 
-## 安装
+## 环境要求
 
-1. 进入 API 目录：
-```bash
-cd api
-```
+- PHP 8.1 或更高版本
+- 建议启用 `curl` 扩展
+- Web 服务器可执行 `api/*.php`
 
-2. 安装依赖：
-```bash
-npm install
-```
+## 配置
 
-3. 配置环境变量：
+1. 在 `api` 目录复制环境变量模板：
+
 ```bash
 cp .env.example .env
 ```
 
-4. 编辑 `.env` 文件，填入你的飞书应用凭证：
+2. 填写飞书配置：
+
 ```env
 FEISHU_APP_ID=your_app_id_here
 FEISHU_APP_SECRET=your_app_secret_here
 FEISHU_APP_TOKEN=your_app_token_here
 FEISHU_TABLE_ID=your_table_id_here
-PORT=3000
 ALLOWED_ORIGINS=http://localhost,https://srinternet.cn
 ```
 
-## 飞书多维表格配置
-
-### 必需字段
-
-在飞书多维表格中，请确保包含以下字段：
-
-| 字段名 | 类型 | 说明 | 是否必填 |
-|--------|------|------|----------|
-| `id` 或 `ad_id` | 文本 | 广告唯一标识 | 是 |
-| `title` 或 `ad_title` | 文本 | 广告标题 | 否 |
-| `url` 或 `ad_url` 或 `link` | URL | 广告链接 | 是 |
-| `content` 或 `ad_content` 或 `description` | 文本 | 广告内容描述 | 否 |
-| `imageUrl` 或 `image_url` 或 `ad_image` | URL | 广告图片链接 | 否 |
-| `tag` 或 `ad_tag` 或 `label` | 文本 | 广告标签 | 否 |
-| `type` | 单选 | 广告类型: iframe/banner/card | 否（默认 card） |
-| `priority` | 单选 | 优先级: high/medium/low | 否（默认 medium） |
-| `startDate` 或 `start_date` 或 `start_time` | 日期 | 开始时间 | 否 |
-| `endDate` 或 `end_date` 或 `end_time` | 日期 | 截止时间 | 否 |
-| `enabled` | 复选框 | 是否启用 | 否（默认 true） |
-
-### 获取飞书配置参数
-
-1. **App ID 和 App Secret**
-   - 登录飞书开放平台：https://open.feishu.cn/
-   - 创建企业自建应用
-   - 在应用详情页面获取 App ID 和 App Secret
-
-2. **App Token**
-   - 打开你的飞书多维表格
-   - 在浏览器地址栏中，App Token 是 URL 中 `/base/` 后面的部分
-   - 例如：`https://xxx.feishu.cn/base/APP_TOKEN/...`
-
-3. **Table ID**
-   - 在多维表格中，Table ID 是 URL 中 `...base/xxx/` 后面的部分
-   - 例如：`https://xxx.feishu.cn/base/xxx/TABLE_ID`
-
-4. **配置权限**
-   - 在飞书开放平台，为你的应用添加权限：
-     - `bitable:app` - 查看、创建和更新多维表格
-     - 或者至少需要 `bitable:app:readonly` - 只读访问
-
-## 运行
-
-### 开发模式（带自动重启）：
-```bash
-npm run dev
-```
-
-### 生产模式：
-```bash
-npm start
-```
-
-服务器将在配置的端口启动（默认 3000）。
-
-## API 端点
+## 接口
 
 ### 获取所有活跃广告
+
 ```http
-GET /api/ads
+GET /api/ads.php
 ```
 
-**响应示例：**
+响应示例：
+
 ```json
 {
   "success": true,
-  "count": 2,
+  "count": 1,
   "data": [
     {
       "id": "ad-001",
       "title": "赞助商广告标题",
       "url": "https://example.com",
-      "content": "广告内容描述",
-      "imageUrl": "https://example.com/image.jpg",
+      "content": "广告描述",
+      "imageUrl": "https://example.com/banner.jpg",
       "tag": "赞助商",
       "type": "card",
       "priority": "high",
@@ -125,137 +65,63 @@ GET /api/ads
 }
 ```
 
-### 获取特定广告
+### 获取单条广告
+
 ```http
-GET /api/ads/:id
+GET /api/ads.php?id=ad-001
 ```
 
-**响应示例：**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "ad-001",
-    "title": "赞助商广告标题",
-    "url": "https://example.com",
-    ...
-  }
-}
-```
+也兼容 `PATH_INFO` 形式，例如 `/api/ads.php/ad-001`。
 
 ### 健康检查
+
 ```http
-GET /health
+GET /api/health.php
 ```
 
-**响应示例：**
+响应示例：
+
 ```json
 {
   "status": "ok",
-  "timestamp": "2026-02-12T10:00:00.000Z",
-  "feishuConfigured": true
+  "timestamp": "2026-06-14T12:00:00+00:00",
+  "feishuConfigured": true,
+  "runtime": "php"
 }
 ```
 
-## 错误处理
+## 飞书字段支持
 
-API 会返回适当的 HTTP 状态码和错误信息：
+支持以下字段名变体：
 
-- `200` - 成功
-- `404` - 资源未找到
-- `500` - 服务器错误
+- `id` / `ad_id`
+- `title` / `ad_title`
+- `url` / `ad_url` / `link`
+- `content` / `ad_content` / `description`
+- `imageUrl` / `image_url` / `ad_image`
+- `tag` / `ad_tag` / `label`
+- `type`
+- `priority`
+- `startDate` / `start_date` / `start_time`
+- `endDate` / `end_date` / `end_time`
+- `enabled`
 
-错误响应格式：
-```json
-{
-  "error": "错误类型",
-  "message": "详细错误信息"
-}
-```
+## 处理逻辑
 
-## 数据过滤逻辑
+- 通过飞书开放平台接口获取 `tenant_access_token`
+- 将令牌缓存到 `api/.feishu_token_cache.json`
+- 分页读取多维表格记录
+- 过滤未启用、缺少 `id/url`、超出投放时间的广告
+- 按 `high > medium > low` 排序
 
-API 自动过滤广告，只返回满足以下条件的广告：
+## 部署提示
 
-1. `enabled` 字段为 `true`
-2. 必须有 `id` 和 `url` 字段
-3. 当前时间在 `startDate` 和 `endDate` 范围内（如果设置了日期）
+- Apache 或 Nginx + PHP-FPM 均可
+- 若站点和接口同域部署，前端可直接请求 `/api/ads.php`
+- 若跨域调用，请在 `ALLOWED_ORIGINS` 中写入允许的来源
 
-## 部署建议
+## 故障排查
 
-### 使用 PM2 部署
-
-1. 安装 PM2：
-```bash
-npm install -g pm2
-```
-
-2. 启动应用：
-```bash
-pm2 start server.js --name "ad-api"
-```
-
-3. 设置开机自启：
-```bash
-pm2 startup
-pm2 save
-```
-
-### 使用 Docker 部署
-
-创建 `Dockerfile`：
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-构建并运行：
-```bash
-docker build -t ad-api .
-docker run -p 3000:3000 --env-file .env ad-api
-```
-
-### 使用 Nginx 反向代理
-
-```nginx
-location /api/ {
-    proxy_pass http://localhost:3000/api/;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_cache_bypass $http_upgrade;
-}
-```
-
-## 安全建议
-
-1. **不要提交 .env 文件** - 已在 .gitignore 中排除
-2. **使用 HTTPS** - 在生产环境中始终使用 HTTPS
-3. **限制 CORS 源** - 仅允许你的域名访问 API
-4. **定期更新依赖** - 运行 `npm audit` 检查安全漏洞
-5. **使用环境变量** - 所有敏感配置应通过环境变量传递
-6. **限制请求速率** - 考虑添加速率限制中间件
-
-## 故障排除
-
-### 问题：访问令牌失效
-**解决方案**：API 会自动刷新令牌，但如果持续失败，请检查 App ID 和 App Secret 是否正确。
-
-### 问题：无法获取表格数据
-**解决方案**：
-1. 检查 App Token 和 Table ID 是否正确
-2. 确认应用有足够的权限
-3. 确认多维表格对应用可见
-
-### 问题：CORS 错误
-**解决方案**：在 `.env` 文件中添加你的前端域名到 `ALLOWED_ORIGINS`。
-
-## 许可证
-
-MIT License - 详见根目录 LICENSE 文件
+- 返回 `Feishu API not configured`：检查 `api/.env`
+- 返回飞书鉴权失败：检查 `FEISHU_APP_ID` 与 `FEISHU_APP_SECRET`
+- 无广告数据：检查多维表格字段、启用状态和投放时间

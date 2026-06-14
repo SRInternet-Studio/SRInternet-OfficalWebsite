@@ -161,8 +161,7 @@
             statusDiv.innerHTML = '<div class="status warning">⏳ 正在测试...</div>';
             
             try {
-                // Test health endpoint
-                const healthResponse = await fetch('/api/ads');
+                const healthResponse = await fetch('/api/ads.php');
                 const healthData = await healthResponse.json();
                 
                 if (healthResponse.ok) {
@@ -173,7 +172,7 @@
                     responseDiv.textContent = JSON.stringify(healthData, null, 2);
                 }
             } catch (error) {
-                statusDiv.innerHTML = `<div class="status error">✗ API 连接失败: ${error.message}<br>请确保后端服务器正在运行</div>`;
+                    statusDiv.innerHTML = `<div class="status error">✗ API 连接失败: ${error.message}<br>请确保 PHP 环境和接口文件可访问</div>`;
                 responseDiv.textContent = error.stack;
             }
         }

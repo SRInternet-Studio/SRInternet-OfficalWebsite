@@ -1,0 +1,149 @@
+@media (max-width: 768px) {
+  .hero-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  .hero-actions .btn {
+    padding: 0.7rem 1rem;
+    font-size: 0.92rem;
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .hero-actions .btn i {
+    font-size: 0.92rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .ad-card {
+    grid-template-columns: auto 1fr;
+  }
+
+  .ad-card img {
+    margin: 0;
+  }
+}
+
+@media (min-width: 980px) {
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .footer-top {
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 839px) {
+  .hero-copy h1 {
+    max-width: 10ch;
+  }
+
+  .hero-actions {
+    gap: 0.8rem;
+  }
+
+  .btn {
+    min-width: min(100%, 240px);
+    flex: 1 1 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    width: min(var(--max-width), calc(100% - 1.25rem));
+  }
+
+  .section {
+    padding: 4rem 0;
+  }
+
+  .hero {
+    min-height: calc(100svh - var(--header-height));
+    padding: 4rem 0 2.75rem;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(2.55rem, 12vw, 3.75rem);
+  }
+
+  .lead {
+    font-size: 1rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .community-card,
+  .about-panel,
+  .footer-brand-panel,
+  .footer-cta {
+    border-radius: 24px;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .team-card {
+    align-items: flex-start;
+  }
+
+  .footer-bottom {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes heroBlobA {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(4rem, 2.5rem, 0) scale(1.08);
+  }
+}
+
+@keyframes heroBlobB {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(-3.5rem, -2rem, 0) scale(1.05);
+  }
+}
+
+
+.bilibili-card:hover .community-action {
+  border-top-color: rgba(251, 114, 153, 0.26);
+}
+
+.github-card:hover .community-action {
+  border-top-color: rgba(155, 124, 255, 0.26);
+}
+
+.qq-card:hover .community-action {
+  border-top-color: rgba(70, 164, 255, 0.26);
+}
