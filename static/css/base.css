@@ -31,32 +31,145 @@
 }
 
 :root {
+  /* ===== 背景色阶 ===== */
   --bg-950: #06070d;
   --bg-900: #090b13;
   --bg-850: #0d1019;
   --bg-800: #101421;
   --bg-760: #151b2a;
+
+  /* ===== 文字色阶 ===== */
   --text-100: #f7f8fb;
   --text-200: #dfe5ef;
   --text-300: #bcc6d8;
   --text-500: #7c879d;
+
+  /* ===== 品牌色 ===== */
   --primary: #7c6cff;
+  --primary-hover: #9580ff;
   --primary-2: #a78bfa;
   --accent: #35d2c2;
   --accent-dark: #1eb6a7;
+
+  /* ===== 社区色 ===== */
   --bilibili: #fb7299;
   --github: #9b7cff;
   --qq: #46a4ff;
-  --card: rgba(255, 255, 255, 0.04);
-  --card-strong: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --shadow: 0 18px 60px rgba(0, 0, 0, 0.34);
-  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.22);
-  --radius-lg: 24px;
-  --radius-md: 18px;
-  --radius-sm: 12px;
+  --qq-hover: #60b5ff;
+
+  /* ===== Footer 列主题色 ===== */
+  --footer-pink: #f9a8d4;
+  --footer-blue: #93c5fd;
+  --footer-green: #4ade80;
+  --footer-yellow: #facc15;
+
+  /* ===== 颜色 RGB（用于 rgba()） ===== */
+  --primary-rgb: 124, 108, 255;
+  --accent-rgb: 53, 210, 194;
+  --bilibili-rgb: 251, 114, 153;
+  --github-rgb: 155, 124, 255;
+  --qq-rgb: 70, 164, 255;
+  --white-rgb: 255, 255, 255;
+  --black-rgb: 0, 0, 0;
+  --surface-dark-rgb: 15, 23, 42;
+
+  /* ===== 语义化颜色 ===== */
+  --card: rgba(var(--white-rgb), 0.04);
+  --card-strong: rgba(var(--white-rgb), 0.06);
+  --border: rgba(var(--white-rgb), 0.08);
+  --border-strong: rgba(var(--white-rgb), 0.14);
+  --shadow: 0 18px 60px rgba(var(--black-rgb), 0.34);
+  --shadow-soft: 0 10px 30px rgba(var(--black-rgb), 0.22);
+  --nav-bg: rgba(10, 14, 22, 0.96);
+
+  /* ===== 按钮 hover/active 颜色 ===== */
+  --btn-ghost-hover: #5a6577;
+  --primary-hover-light: #9580ff;
+  --qq-hover-light: #60b5ff;
+
+  /* ===== Tag 颜色 ===== */
+  --tag-purple: rgba(var(--primary-rgb), 0.15);
+  --tag-purple-border: rgba(var(--primary-rgb), 0.25);
+  --tag-cyan: rgba(var(--accent-rgb), 0.15);
+  --tag-cyan-border: rgba(var(--accent-rgb), 0.25);
+  --tag-pink: rgba(var(--bilibili-rgb), 0.15);
+  --tag-pink-border: rgba(var(--bilibili-rgb), 0.25);
+
+  /* ===== 字号阶梯 ===== */
+  --text-xs: 0.7rem;
+  --text-sm: 0.82rem;
+  --text-base: 0.92rem;
+  --text-md: 1rem;
+  --text-lg: 1.1rem;
+  --text-xl: 1.2rem;
+  --text-2xl: 1.45rem;
+  --text-3xl: 2rem;
+
+  /* ===== 字重 ===== */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* ===== 间距阶梯 ===== */
+  --gap-xs: 0.4rem;
+  --gap-sm: 0.65rem;
+  --gap-md: 1rem;
+  --gap-lg: 1.35rem;
+  --gap-xl: 1.6rem;
+
+  --space-xs: 0.5rem;
+  --space-sm: 0.8rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* ===== 圆角 ===== */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 30px;
+  --radius-pill: 999px;
+  --radius-full: 50%;
+
+  /* ===== 过渡时间 ===== */
+  --duration-fast: 0.15s;
+  --duration-normal: 0.25s;
+  --duration-medium: 0.3s;
+  --duration-slow: 0.4s;
+
+  /* ===== 缓动函数 ===== */
+  --ease-default: ease;
+  --ease-out-expo: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-material: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ===== 模糊 ===== */
+  --blur-sm: 4px;
+  --blur-md: 12px;
+  --blur-lg: 36px;
+
+  /* ===== Z-index 层级 ===== */
+  --z-card: 1;
+  --z-card-content: 2;
+  --z-card-label: 3;
+  --z-header: 50;
+  --z-floating: 90;
+  --z-dialog: 100;
+
+  /* ===== 固定尺寸 ===== */
+  --size-icon-sm: 32px;
+  --size-icon-md: 46px;
+  --size-icon-lg: 48px;
+  --size-avatar: 60px;
+
+  /* ===== 容器宽度 ===== */
   --max-width: 1200px;
+  --max-width-content: 900px;
+  --max-width-narrow: 760px;
+
+  /* ===== 其他 ===== */
   --hero-pointer-x: 50%;
   --hero-pointer-y: 35%;
   --header-height: 60px;
@@ -68,11 +181,6 @@
 
 html {
   scroll-behavior: smooth;
-}
-
-.hero {
-  position: relative;
-  overflow: hidden;
 }
 
 .hero-slogan-image {
@@ -93,8 +201,11 @@ html {
   object-fit: contain;
 }
 
-.hero-overlay {
-  z-index: 0;
+@media (max-width: 768px) {
+  .hero-slogan-image img {
+    width: 120vw;
+    max-width: none;
+  }
 }
 
 .hero-grid,
