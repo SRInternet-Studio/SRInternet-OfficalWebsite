@@ -31,7 +31,7 @@ require __DIR__ . '/partials/header.php';
         <h3>管理员列表</h3>
         <p>列表默认只展示账号摘要，避免页面堆满操作按钮。</p>
     </div>
-    <a class="btn-primary-solid" href="/SR-Admin/admins.php?mode=new">新增管理员</a>
+    <a class="btn-primary-solid" href="<?= sr_escape(sr_admin_url('admins.php')) ?>?mode=new">新增管理员</a>
 </section>
 
 <article class="form-card">
@@ -53,7 +53,7 @@ require __DIR__ . '/partials/header.php';
                         <td><?= sr_escape((string) $managedAdmin['email']) ?></td>
                         <td><?= sr_escape((string) $managedAdmin['qq']) ?></td>
                         <td><?= sr_escape((string) ($managedAdmin['last_login_at'] ?? '从未登录')) ?></td>
-                        <td><a class="table-link" href="/SR-Admin/admins.php?edit=<?= (int) $managedAdmin['id'] ?>">编辑</a></td>
+                        <td><a class="table-link" href="<?= sr_escape(sr_admin_url('admins.php')) ?>?edit=<?= (int) $managedAdmin['id'] ?>">编辑</a></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -64,7 +64,7 @@ require __DIR__ . '/partials/header.php';
 <?php if ($isCreating || $editingAdmin !== null): ?>
     <article class="form-card add-card">
         <h3><?= $editingAdmin !== null ? '编辑管理员' : '新增管理员' ?></h3>
-        <form method="post" action="/SR-Admin/action.php" class="grid-form">
+        <form method="post" action="<?= sr_escape(sr_admin_url('action.php')) ?>" class="grid-form">
             <input type="hidden" name="csrf_token" value="<?= sr_escape($csrfToken) ?>">
             <input type="hidden" name="action" value="<?= $editingAdmin !== null ? 'update_admin' : 'add_admin' ?>">
             <?php if ($editingAdmin !== null): ?>
@@ -78,12 +78,12 @@ require __DIR__ . '/partials/header.php';
 
             <div class="action-row">
                 <button type="submit" class="btn-primary-solid"><?= $editingAdmin !== null ? '保存管理员' : '新增管理员' ?></button>
-                <a class="ghost-link" href="/SR-Admin/admins.php">返回列表</a>
+                <a class="ghost-link" href="<?= sr_escape(sr_admin_url('admins.php')) ?>">返回列表</a>
             </div>
         </form>
 
         <?php if ($editingAdmin !== null && count($admins) > 1): ?>
-            <form method="post" action="/SR-Admin/action.php" class="inline-danger-form" onsubmit="return confirm('确认删除该管理员吗？');">
+            <form method="post" action="<?= sr_escape(sr_admin_url('action.php')) ?>" class="inline-danger-form" onsubmit="return confirm('确认删除该管理员吗？');">
                 <input type="hidden" name="csrf_token" value="<?= sr_escape($csrfToken) ?>">
                 <input type="hidden" name="action" value="delete_admin">
                 <input type="hidden" name="id" value="<?= (int) $editingAdmin['id'] ?>">

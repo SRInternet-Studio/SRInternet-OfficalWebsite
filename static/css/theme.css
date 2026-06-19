@@ -117,7 +117,7 @@ html[data-theme="light"] body {
 }
 
 html[data-theme="light"] .section-alt {
-  background: linear-gradient(180deg, rgba(124, 108, 255, 0.035), rgba(255, 255, 255, 0.72));
+  background: linear-gradient(180deg, rgba(124, 108, 255, 0.025), rgba(249, 251, 255, 0.5));
 }
 
 html[data-theme="light"] .site-header {

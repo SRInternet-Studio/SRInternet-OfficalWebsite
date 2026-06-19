@@ -237,10 +237,17 @@
   padding-top: 3rem;
 }
 
+.footer-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
 .footer-top {
-  display: grid;
-  gap: 1.2rem;
-  margin-bottom: 2rem;
+  flex: 0 0 auto;
+  max-width: 350px;
+  margin-bottom: 0;
 }
 
 .footer-brand-panel,
@@ -285,11 +292,12 @@
 }
 
 .footer-grid {
+  flex: 1;
   display: grid;
   gap: 1.6rem;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  padding-top: 1.7rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  padding-top: 0;
+  border-top: none;
 }
 
 .footer-grid > div:nth-child(1) { --footer-col-theme: #f472b6; /* pink-400 */ }
@@ -411,6 +419,15 @@
 
   .nav-bar {
     padding: 0.5rem 0;
+  }
+
+  .footer-main {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .footer-top {
+    max-width: 100%;
   }
 }
 

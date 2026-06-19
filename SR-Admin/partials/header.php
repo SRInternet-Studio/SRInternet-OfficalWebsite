@@ -16,7 +16,7 @@ $menuItems = sr_admin_menu_items();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= sr_escape($adminPageTitle) ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/SR-Admin/styles.css">
+    <link rel="stylesheet" href="<?= sr_escape(sr_admin_asset_url('styles.css')) ?>">
 </head>
 <body class="admin-page">
     <div class="admin-shell">
@@ -41,7 +41,7 @@ $menuItems = sr_admin_menu_items();
                 <p class="sidebar-text">上次登录：<?= sr_escape((string) ($admin['last_login_at'] ?? '首次登录')) ?></p>
                 <div class="sidebar-actions">
                     <a class="ghost-link" href="/index.html" target="_blank" rel="noopener noreferrer">查看官网</a>
-                    <a class="ghost-link danger-link" href="/SR-Admin/logout.php">退出登录</a>
+                    <a class="ghost-link danger-link" href="<?= sr_escape(sr_admin_url('logout.php')) ?>">退出登录</a>
                 </div>
             </div>
         </aside>

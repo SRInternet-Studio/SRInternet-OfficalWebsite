@@ -5,33 +5,33 @@ declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
-    sr_redirect('/SR-Admin/index.php');
+    sr_redirect(sr_admin_url('index.php'));
 }
 
 $admin = sr_require_login();
 $action = trim((string) ($_POST['action'] ?? ''));
 $redirectMap = [
-    'add_navigation' => '/SR-Admin/navigation.php',
-    'update_navigation' => '/SR-Admin/navigation.php',
-    'delete_navigation' => '/SR-Admin/navigation.php',
-    'save_hero' => '/SR-Admin/hero.php',
-    'add_hero_button' => '/SR-Admin/hero.php',
-    'update_hero_button' => '/SR-Admin/hero.php',
-    'delete_hero_button' => '/SR-Admin/hero.php',
-    'add_product' => '/SR-Admin/products.php',
-    'update_product' => '/SR-Admin/products.php',
-    'delete_product' => '/SR-Admin/products.php',
-    'save_community' => '/SR-Admin/community.php',
-    'add_member' => '/SR-Admin/members.php',
-    'update_member' => '/SR-Admin/members.php',
-    'delete_member' => '/SR-Admin/members.php',
-    'save_contact' => '/SR-Admin/contact.php',
-    'save_footer' => '/SR-Admin/footer.php',
-    'add_admin' => '/SR-Admin/admins.php',
-    'update_admin' => '/SR-Admin/admins.php',
-    'delete_admin' => '/SR-Admin/admins.php',
+    'add_navigation' => sr_admin_url('navigation.php'),
+    'update_navigation' => sr_admin_url('navigation.php'),
+    'delete_navigation' => sr_admin_url('navigation.php'),
+    'save_hero' => sr_admin_url('hero.php'),
+    'add_hero_button' => sr_admin_url('hero.php'),
+    'update_hero_button' => sr_admin_url('hero.php'),
+    'delete_hero_button' => sr_admin_url('hero.php'),
+    'add_product' => sr_admin_url('products.php'),
+    'update_product' => sr_admin_url('products.php'),
+    'delete_product' => sr_admin_url('products.php'),
+    'save_community' => sr_admin_url('community.php'),
+    'add_member' => sr_admin_url('members.php'),
+    'update_member' => sr_admin_url('members.php'),
+    'delete_member' => sr_admin_url('members.php'),
+    'save_contact' => sr_admin_url('contact.php'),
+    'save_footer' => sr_admin_url('footer.php'),
+    'add_admin' => sr_admin_url('admins.php'),
+    'update_admin' => sr_admin_url('admins.php'),
+    'delete_admin' => sr_admin_url('admins.php'),
 ];
-$redirectTarget = $redirectMap[$action] ?? '/SR-Admin/index.php';
+$redirectTarget = $redirectMap[$action] ?? sr_admin_url('index.php');
 
 try {
     sr_verify_csrf($_POST['csrf_token'] ?? null);
@@ -142,8 +142,28 @@ try {
             break;
 
         case 'add_product':
-            if (!sr_uploaded_file_is_present('image_file')) {
-                throw new RuntimeException('新增产品必须上传图片。');
+            $imageUrl = '';
+            $imageInputMethod = trim($_POST['image_input_method'] ?? 'upload');
+            
+            if ($imageInputMethod === 'upload') {
+                if (!sr_uploaded_file_is_present('image_file')) {
+                    throw new RuntimeException('请上传图片文件。');
+                }
+                $imageUrl = sr_save_product_image($_FILES['image_file']);
+            } elseif ($imageInputMethod === 'select') {
+                $selectedImage = trim($_POST['selected_image'] ?? '');
+                if ($selectedImage === '') {
+                    throw new RuntimeException('请从列表中选择图片。');
+                }
+                $imageUrl = sr_normalize_image_url($selectedImage);
+            } elseif ($imageInputMethod === 'path') {
+                $manualPath = trim($_POST['manual_image_path'] ?? '');
+                if ($manualPath === '') {
+                    throw new RuntimeException('请输入图片路径或URL。');
+                }
+                $imageUrl = sr_normalize_image_url($manualPath);
+            } else {
+                throw new RuntimeException('无效的图片输入方式。');
             }
 
             $name = sr_normalize_text($_POST['name'] ?? '', 60, '产品名称');
@@ -156,7 +176,7 @@ try {
                 ':link' => sr_normalize_link($_POST['link'] ?? ''),
                 ':description' => sr_normalize_text($_POST['description'] ?? '', 220, '产品描述'),
                 ':tags' => sr_normalize_tags($_POST['tags'] ?? ''),
-                ':image_url' => sr_save_product_image($_FILES['image_file']),
+                ':image_url' => $imageUrl,
                 ':is_recommended' => sr_checkbox_value('is_recommended'),
                 ':sort_order' => sr_normalize_sort_order($_POST['sort_order'] ?? 0),
                 ':created_at' => $now,
@@ -176,10 +196,24 @@ try {
             }
 
             $imageUrl = (string) $currentProduct['image_url'];
-            if (sr_uploaded_file_is_present('image_file')) {
+            $imageInputMethod = trim($_POST['image_input_method'] ?? '');
+            
+            if ($imageInputMethod === 'upload' && sr_uploaded_file_is_present('image_file')) {
                 $newImageUrl = sr_save_product_image($_FILES['image_file']);
                 sr_delete_managed_product_image($imageUrl);
                 $imageUrl = $newImageUrl;
+            } elseif ($imageInputMethod === 'select') {
+                $selectedImage = trim($_POST['selected_image'] ?? '');
+                if ($selectedImage !== '') {
+                    sr_delete_managed_product_image($imageUrl);
+                    $imageUrl = sr_normalize_image_url($selectedImage);
+                }
+            } elseif ($imageInputMethod === 'path') {
+                $manualPath = trim($_POST['manual_image_path'] ?? '');
+                if ($manualPath !== '') {
+                    sr_delete_managed_product_image($imageUrl);
+                    $imageUrl = sr_normalize_image_url($manualPath);
+                }
             }
 
             $name = sr_normalize_text($_POST['name'] ?? '', 60, '产品名称');

@@ -540,6 +540,31 @@
   color: var(--text-200);
 }
 
+.content-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  padding: 1.4rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-300);
+  text-align: center;
+}
+
+.content-placeholder p {
+  margin: 0;
+  max-width: 34rem;
+  line-height: 1.7;
+}
+
+.content-placeholder--list {
+  display: block;
+  min-height: auto;
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+}
+
 
 /* Contact */
 .contact-grid {
@@ -649,6 +674,10 @@ section {
   scroll-margin-top: 100px;
 }
 
-.section + .section {
+.section {
   border-top: 1px solid var(--border);
+}
+
+.section:first-of-type {
+  border-top: none;
 }

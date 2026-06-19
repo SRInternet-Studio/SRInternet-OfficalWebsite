@@ -33,11 +33,6 @@
   .card-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-
-  .footer-top {
-    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
-    align-items: stretch;
-  }
 }
 
 @media (max-width: 839px) {

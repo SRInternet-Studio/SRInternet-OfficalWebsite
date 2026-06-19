@@ -31,7 +31,7 @@ require __DIR__ . '/partials/header.php';
         <h3>导航列表</h3>
         <p>管理导航名称、链接、排序和是否新标签页打开。</p>
     </div>
-    <a class="btn-primary-solid" href="/SR-Admin/navigation.php?mode=new">新增导航项</a>
+    <a class="btn-primary-solid" href="<?= sr_escape(sr_admin_url('navigation.php')) ?>?mode=new">新增导航项</a>
 </section>
 
 <article class="form-card">
@@ -53,7 +53,7 @@ require __DIR__ . '/partials/header.php';
                         <td><code><?= sr_escape((string) $item['link']) ?></code></td>
                         <td><?= (int) $item['sort_order'] ?></td>
                         <td><?= ((int) $item['open_in_new_tab']) === 1 ? '是' : '否' ?></td>
-                        <td><a class="table-link" href="/SR-Admin/navigation.php?edit=<?= (int) $item['id'] ?>">编辑</a></td>
+                        <td><a class="table-link" href="<?= sr_escape(sr_admin_url('navigation.php')) ?>?edit=<?= (int) $item['id'] ?>">编辑</a></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -64,7 +64,7 @@ require __DIR__ . '/partials/header.php';
 <?php if ($isCreating || $editingItem !== null): ?>
     <article class="form-card add-card">
         <h3><?= $editingItem !== null ? '编辑导航项' : '新增导航项' ?></h3>
-        <form method="post" action="/SR-Admin/action.php" class="grid-form">
+        <form method="post" action="<?= sr_escape(sr_admin_url('action.php')) ?>" class="grid-form">
             <input type="hidden" name="csrf_token" value="<?= sr_escape($csrfToken) ?>">
             <input type="hidden" name="action" value="<?= $editingItem !== null ? 'update_navigation' : 'add_navigation' ?>">
             <?php if ($editingItem !== null): ?>
@@ -78,12 +78,12 @@ require __DIR__ . '/partials/header.php';
 
             <div class="action-row">
                 <button type="submit" class="btn-primary-solid"><?= $editingItem !== null ? '保存导航' : '新增导航' ?></button>
-                <a class="ghost-link" href="/SR-Admin/navigation.php">返回列表</a>
+                <a class="ghost-link" href="<?= sr_escape(sr_admin_url('navigation.php')) ?>">返回列表</a>
             </div>
         </form>
 
         <?php if ($editingItem !== null): ?>
-            <form method="post" action="/SR-Admin/action.php" class="inline-danger-form" onsubmit="return confirm('确认删除该导航项吗？');">
+            <form method="post" action="<?= sr_escape(sr_admin_url('action.php')) ?>" class="inline-danger-form" onsubmit="return confirm('确认删除该导航项吗？');">
                 <input type="hidden" name="csrf_token" value="<?= sr_escape($csrfToken) ?>">
                 <input type="hidden" name="action" value="delete_navigation">
                 <input type="hidden" name="id" value="<?= (int) $editingItem['id'] ?>">

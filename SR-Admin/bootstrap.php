@@ -16,9 +16,9 @@ function sr_bootstrap(): void
 
 function sr_ensure_directories(): void
 {
-    if (!is_dir(SR_DATA_DIR)) {
-        if (!@mkdir(SR_DATA_DIR, 0775, true) && !is_dir(SR_DATA_DIR)) {
-            throw new RuntimeException('无法创建 SQLite 数据目录：' . SR_DATA_DIR);
+    if (!is_dir(SR_SQL_DIR)) {
+        if (!@mkdir(SR_SQL_DIR, 0775, true) && !is_dir(SR_SQL_DIR)) {
+            throw new RuntimeException('无法创建 SQLite 数据目录：' . SR_SQL_DIR);
         }
     }
 
@@ -31,70 +31,151 @@ function sr_ensure_directories(): void
 
 function sr_ensure_storage_protection(): void
 {
-    $htaccessPath = SR_DATA_DIR . DIRECTORY_SEPARATOR . '.htaccess';
-    if (!is_file($htaccessPath)) {
-        @file_put_contents($htaccessPath, "Deny from all\n");
+    if (!is_file(SR_SQL_PROTECTION_PATH)) {
+        @file_put_contents(SR_SQL_PROTECTION_PATH, "Deny from all\n");
     }
 }
 
-function sr_load_runtime_config(): array
+function sr_has_install_lock(): bool
 {
-    if (!is_file(SR_RUNTIME_CONFIG_PATH)) {
-        return [];
-    }
-
-    $config = require SR_RUNTIME_CONFIG_PATH;
-    return is_array($config) ? $config : [];
+    return is_file(SR_INSTALL_LOCK_PATH);
 }
 
-function sr_save_runtime_config(array $config): void
+function sr_create_install_lock(): void
 {
-    sr_ensure_directories();
-
-    $payload = "<?php\n\nreturn " . var_export($config, true) . ";\n";
-    if (@file_put_contents(SR_RUNTIME_CONFIG_PATH, $payload, LOCK_EX) === false) {
-        throw new RuntimeException('无法写入运行时配置文件。');
+    $payload = "installed_at=" . sr_now() . PHP_EOL;
+    if (@file_put_contents(SR_INSTALL_LOCK_PATH, $payload, LOCK_EX) === false) {
+        throw new RuntimeException('无法创建安装锁文件。');
     }
 
-    @chmod(SR_RUNTIME_CONFIG_PATH, 0664);
+    @chmod(SR_INSTALL_LOCK_PATH, 0664);
 }
 
-function sr_is_installed(): bool
+function sr_has_configured_database(): bool
 {
-    $config = sr_load_runtime_config();
-    $dbFile = $config['db_file'] ?? '';
+    $overridePath = $GLOBALS['sr_db_path_override'] ?? null;
 
-    if (is_string($dbFile) && $dbFile !== '' && is_file(sr_db_path_from_file_name($dbFile))) {
-        return true;
-    }
-
-    return is_file(sr_db_path_from_file_name('site.sqlite'));
+    return (is_string($overridePath) && trim($overridePath) !== '')
+        || trim((string) SR_SQLITE_PATH) !== '';
 }
 
-function sr_has_runtime_config(): bool
+function sr_set_db_path_override(?string $databasePath): void
 {
-    $config = sr_load_runtime_config();
-    $dbFile = $config['db_file'] ?? '';
+    $GLOBALS['sr_db_path_override'] = $databasePath;
+}
 
-    return is_string($dbFile) && $dbFile !== '';
+function sr_is_absolute_path(string $path): bool
+{
+    return preg_match('/^(?:[A-Za-z]:[\\\\\\/]|\\\\\\\\|\/)/', $path) === 1;
 }
 
 function sr_db_path(): string
 {
-    $config = sr_load_runtime_config();
-    $dbFile = $config['db_file'] ?? 'site.sqlite';
+    $overridePath = $GLOBALS['sr_db_path_override'] ?? null;
+    if (is_string($overridePath) && trim($overridePath) !== '') {
+        return $overridePath;
+    }
 
-    return sr_db_path_from_file_name((string) $dbFile);
+    $configuredPath = trim((string) SR_SQLITE_PATH);
+    if ($configuredPath === '') {
+        return '';
+    }
+
+    $normalizedPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $configuredPath);
+
+    if (sr_is_absolute_path($normalizedPath)) {
+        return $normalizedPath;
+    }
+
+    return SR_ROOT_DIR . DIRECTORY_SEPARATOR . ltrim($normalizedPath, DIRECTORY_SEPARATOR);
+}
+
+function sr_db_relative_path(): string
+{
+    $overridePath = $GLOBALS['sr_db_path_override'] ?? null;
+    if (is_string($overridePath) && trim($overridePath) !== '') {
+        return sr_relative_path_from_root($overridePath);
+    }
+
+    $configuredPath = trim((string) SR_SQLITE_PATH);
+
+    return str_replace('\\', '/', $configuredPath);
 }
 
 function sr_db_path_from_file_name(string $fileName): string
 {
-    return SR_DATA_DIR . DIRECTORY_SEPARATOR . basename($fileName);
+    return SR_SQL_DIR . DIRECTORY_SEPARATOR . basename($fileName);
+}
+
+function sr_relative_path_from_root(string $absolutePath): string
+{
+    $normalizedRoot = rtrim(str_replace('\\', '/', SR_ROOT_DIR), '/');
+    $normalizedPath = str_replace('\\', '/', $absolutePath);
+
+    if (!str_starts_with($normalizedPath, $normalizedRoot . '/')) {
+        throw new RuntimeException('数据库路径必须位于站点根目录内。');
+    }
+
+    return ltrim(substr($normalizedPath, strlen($normalizedRoot)), '/');
+}
+
+function sr_write_sqlite_path_to_config(string $databasePath): void
+{
+    $configContents = @file_get_contents(SR_CONFIG_FILE_PATH);
+    if ($configContents === false) {
+        throw new RuntimeException('无法读取配置文件：' . SR_CONFIG_FILE_PATH);
+    }
+
+    $trimmedPath = trim($databasePath);
+    $relativePath = $trimmedPath === '' ? '' : sr_relative_path_from_root($trimmedPath);
+    $replacement = "define('SR_SQLITE_PATH', " . var_export(str_replace('\\', '/', $relativePath), true) . ');';
+    $updatedContents = preg_replace(
+        "/define\\('SR_SQLITE_PATH',\\s*'[^']*'\\);/",
+        $replacement,
+        $configContents,
+        1,
+        $replaceCount
+    );
+
+    if ($updatedContents === null || $replaceCount !== 1) {
+        throw new RuntimeException('无法写入 SQLite 配置，请检查 config.php 中的 SR_SQLITE_PATH 定义。');
+    }
+
+    if (@file_put_contents(SR_CONFIG_FILE_PATH, $updatedContents, LOCK_EX) === false) {
+        throw new RuntimeException('无法更新配置文件，请检查写入权限：' . SR_CONFIG_FILE_PATH);
+    }
+}
+
+function sr_is_installed(): bool
+{
+    $databasePath = sr_db_path();
+
+    return sr_has_install_lock() && $databasePath !== '' && is_file($databasePath);
 }
 
 function sr_generate_random_db_file_name(): string
 {
     return 'site_' . bin2hex(random_bytes(16)) . '.sqlite';
+}
+
+function sr_install_url(): string
+{
+    return '/install.php';
+}
+
+function sr_admin_url(string $path = ''): string
+{
+    $normalizedPath = trim($path);
+    if ($normalizedPath === '') {
+        return SR_ADMIN_WEB_PATH;
+    }
+
+    return SR_ADMIN_WEB_PATH . '/' . ltrim($normalizedPath, '/');
+}
+
+function sr_admin_asset_url(string $path): string
+{
+    return sr_admin_url($path);
 }
 
 function sr_start_secure_session(): void
@@ -141,9 +222,16 @@ function sr_db(): PDO
         throw new RuntimeException('系统尚未安装，请先完成安装。');
     }
 
-    sr_prepare_sqlite_storage();
+    $pdo = sr_open_sqlite(sr_db_path());
 
-    $pdo = new PDO('sqlite:' . sr_db_path());
+    return $pdo;
+}
+
+function sr_open_sqlite(string $databasePath): PDO
+{
+    sr_prepare_sqlite_storage($databasePath);
+
+    $pdo = new PDO('sqlite:' . $databasePath);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     $pdo->exec('PRAGMA foreign_keys = ON');
@@ -154,16 +242,20 @@ function sr_db(): PDO
     return $pdo;
 }
 
-function sr_prepare_sqlite_storage(): void
+function sr_prepare_sqlite_storage(?string $databasePath = null): void
 {
-    $databasePath = sr_db_path();
+    $databasePath = $databasePath ?? sr_db_path();
 
-    if (!is_dir(SR_DATA_DIR)) {
-        throw new RuntimeException('SQLite 数据目录不存在：' . SR_DATA_DIR);
+    if ($databasePath === '') {
+        throw new RuntimeException('尚未配置 SQLite 数据库路径。');
     }
 
-    if (!is_writable(SR_DATA_DIR)) {
-        throw new RuntimeException('SQLite 数据目录不可写，请为目录授予写入权限：' . SR_DATA_DIR);
+    if (!is_dir(SR_SQL_DIR)) {
+        throw new RuntimeException('SQLite 数据目录不存在：' . SR_SQL_DIR);
+    }
+
+    if (!is_writable(SR_SQL_DIR)) {
+        throw new RuntimeException('SQLite 数据目录不可写，请为目录授予写入权限：' . SR_SQL_DIR);
     }
 
     if (!is_file($databasePath)) {
@@ -275,6 +367,13 @@ function sr_initialize_database(PDO $pdo): void
         )'
     );
 
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS daily_visits (
+            visit_date TEXT PRIMARY KEY,
+            visit_count INTEGER NOT NULL DEFAULT 0
+        )'
+    );
+
     sr_migrate_database($pdo);
     sr_seed_defaults($pdo);
 }
@@ -294,173 +393,28 @@ function sr_migrate_database(PDO $pdo): void
     if (!$hasIconClass) {
         $pdo->exec('ALTER TABLE hero_buttons ADD COLUMN icon_class TEXT NOT NULL DEFAULT "fas fa-arrow-right"');
     }
+
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS daily_visits (
+            visit_date TEXT PRIMARY KEY,
+            visit_count INTEGER NOT NULL DEFAULT 0
+        )'
+    );
 }
 
 function sr_seed_defaults(PDO $pdo): void
 {
-    $timestamp = sr_now();
-    $defaultSettings = [
-        'site_name' => 'SR思锐 团队',
-        'hero_title' => '探索编程的无限可能',
-        'hero_subtitle' => '一个以创新创造为导向的青少年编程学习与实践社区，和伙伴们一起用代码创造未来。',
-        'community_bilibili_url' => 'https://space.bilibili.com/1969160969',
-        'community_github_url' => 'https://github.com/SRInternet-Studio',
-        'community_qq_url' => 'https://qm.qq.com/cgi-bin/qm/qr?k=0OC7vApC79hlsj1cx1SapeOKI_PaAaXY&jump_from=webapi&authKey=4c9uHeinCJS+DhdSe/CRUVCL6h22wqKtzrTxO82E1QSh4mwB9B5e3liZKOl1G8kN',
-        'contact_email' => 'admin@sr-studio.cn',
-        'contact_github_repository' => 'SR思锐 团队|https://github.com/SRInternet-Studio',
-        'contact_join_link' => 'https://sr-studio.feishu.cn/share/base/form/shrcnCXosqYjZzH6GJZhOScLjIh',
-        'contact_query_link' => 'https://sr-studio.feishu.cn/share/base/query/shrcnS4TCHe62IdPLJRsAvWqV3b',
-        'contact_community_link' => '#community',
-        'footer_quick_links' => "首页|#home\n产品中心|#products\n社区|#community\n关于我们|#about",
-        'footer_community_links' => "Bilibili|https://space.bilibili.com/1969160969\nGitHub|https://github.com/SRInternet-Studio\nQQ群|https://qm.qq.com/cgi-bin/qm/qr?k=0OC7vApC79hlsj1cx1SapeOKI_PaAaXY&jump_from=webapi&authKey=4c9uHeinCJS+DhdSe/CRUVCL6h22wqKtzrTxO82E1QSh4mwB9B5e3liZKOl1G8kN",
-        'footer_contact_links' => "商务邮箱|mailto:admin@sr-studio.cn\n加入我们|https://sr-studio.feishu.cn/share/base/form/shrcnCXosqYjZzH6GJZhOScLjIh\n查询申请|https://sr-studio.feishu.cn/share/base/query/shrcnS4TCHe62IdPLJRsAvWqV3b",
-        'footer_legal_links' => "团队政策|https://sr-studio.feishu.cn/wiki/GwKxwB1Ili5bP1kNcUvcFjI5n5c\n隐私政策|https://sr-studio.feishu.cn/wiki/GwKxwB1Ili5bP1kNcUvcFjI5n5c?chat_type=single&from=message&lang=zh&message_type=text#share-QUZ0dqcDmoPDa7xnjACcVGyhnKe\n使用条款|https://sr-studio.feishu.cn/wiki/GwKxwB1Ili5bP1kNcUvcFjI5n5c?from=tab_home#share-C3wadnNGhometBx2U4EcWqBXnBh",
-    ];
-
-    if ((int) $pdo->query('SELECT COUNT(*) FROM settings')->fetchColumn() === 0) {
-        $statement = $pdo->prepare('INSERT INTO settings (setting_key, setting_value, updated_at) VALUES (:setting_key, :setting_value, :updated_at)');
-        foreach ($defaultSettings as $key => $value) {
-            $statement->execute([
-                ':setting_key' => $key,
-                ':setting_value' => $value,
-                ':updated_at' => $timestamp,
-            ]);
-        }
-    }
-
-    $ensureSettingStatement = $pdo->prepare('SELECT COUNT(*) FROM settings WHERE setting_key = :setting_key');
-    $insertSettingStatement = $pdo->prepare('INSERT INTO settings (setting_key, setting_value, updated_at) VALUES (:setting_key, :setting_value, :updated_at)');
-    foreach ($defaultSettings as $key => $value) {
-        $ensureSettingStatement->execute([':setting_key' => $key]);
-        if ((int) $ensureSettingStatement->fetchColumn() > 0) {
-            continue;
-        }
-
-        $insertSettingStatement->execute([
-            ':setting_key' => $key,
-            ':setting_value' => $value,
-            ':updated_at' => $timestamp,
-        ]);
-    }
-
-    if ((int) $pdo->query('SELECT COUNT(*) FROM navigation_items')->fetchColumn() === 0) {
-        $items = [
-            ['首页', '#home', 0, 10],
-            ['账户', 'http://united.sr-studio.cn', 1, 20],
-            ['产品中心', '#products', 0, 30],
-            ['社区', '#community', 0, 40],
-            ['关于我们', '#about', 0, 50],
-            ['联系我们', '#contact', 0, 60],
-            ['团队政策', 'https://sr-studio.feishu.cn/wiki/GwKxwB1Ili5bP1kNcUvcFjI5n5c', 1, 70],
-        ];
-
-        $statement = $pdo->prepare(
-            'INSERT INTO navigation_items (name, link, open_in_new_tab, sort_order, created_at, updated_at)
-             VALUES (:name, :link, :open_in_new_tab, :sort_order, :created_at, :updated_at)'
-        );
-
-        foreach ($items as [$name, $link, $openInNewTab, $sortOrder]) {
-            $statement->execute([
-                ':name' => $name,
-                ':link' => $link,
-                ':open_in_new_tab' => $openInNewTab,
-                ':sort_order' => $sortOrder,
-                ':created_at' => $timestamp,
-                ':updated_at' => $timestamp,
-            ]);
-        }
-    }
-
-    if ((int) $pdo->query('SELECT COUNT(*) FROM hero_buttons')->fetchColumn() === 0) {
-        $buttons = [
-            ['探索产品', '#products', 'btn-primary', 'fas fa-rocket', 10],
-            ['加入我们', 'https://sr-studio.feishu.cn/share/base/form/shrcnCXosqYjZzH6GJZhOScLjIh', 'btn-blue', 'fas fa-user-plus', 20],
-            ['加入社区', '#community', 'btn-ghost', 'fas fa-users', 30],
-        ];
-
-        $statement = $pdo->prepare(
-            'INSERT INTO hero_buttons (label, link, color_class, icon_class, sort_order, created_at, updated_at)
-             VALUES (:label, :link, :color_class, :icon_class, :sort_order, :created_at, :updated_at)'
-        );
-
-        foreach ($buttons as [$label, $link, $colorClass, $iconClass, $sortOrder]) {
-            $statement->execute([
-                ':label' => $label,
-                ':link' => $link,
-                ':color_class' => $colorClass,
-                ':icon_class' => $iconClass,
-                ':sort_order' => $sortOrder,
-                ':created_at' => $timestamp,
-                ':updated_at' => $timestamp,
-            ]);
-        }
-    }
-
-    if ((int) $pdo->query('SELECT COUNT(*) FROM products')->fetchColumn() === 0) {
-        $products = [
-            ['简儿 QQ机器人', 'https://www.bilibili.com/video/BV1i5AEziE9k/', '基于 HypeR 和 OneBot v11 框架，自研插件生态的新一代AI QQ机器人。', 'AI,QQ 机器人,OneBot', 'static/images/products/jianer.jpg', 1, 10],
-            ['壁纸生成器 5', 'https://wallpaper.sr-studio.cn', '从 ACG API 获取多风格图片，让 AI 帮你定制个性壁纸。', 'Python,图像处理,GUI', 'static/images/products/wallpaper.jpg', 0, 20],
-            ['APICORE 规范', 'https://www.bilibili.com/video/BV1q6xuzTEjW/', '灵活、强大、可扩展的 API 配置与编排运行时规范。', 'API,规范,可扩展', 'static/images/products/sron.jpg', 0, 30],
-            ['班级热搜排行榜', 'https://www.bilibili.com/video/BV1ZUXJYxEUt', '班级社交动态速览，让校园生活更有趣、更热闹。', '数据分析,Web,实时', 'static/images/products/classhot.jpg', 0, 40],
-            ['Papa AI', 'https://www.bilibili.com/video/BV1zef8YME8Z', '你的全能 AI 伙伴，兼顾学习与娱乐体验。', 'AI,NLP,机器学习', 'static/images/products/papa.jpg', 0, 50],
-            ['TimerIn 桌面时钟', 'https://www.bilibili.com/video/BV1vU411U7To', '美观实用的桌面时钟，提供多种提醒方式与主题。', '桌面,时间管理,GUI', 'static/images/products/timerin.jpg', 0, 60],
-            ['希沃定制启动器', 'https://www.bilibili.com/video/BV1ky42187JM', '面向教育场景的定制启动器，优化课堂体验。', '教育技术,系统工具,定制', 'static/images/products/seewostart.jpg', 0, 70],
-        ];
-
-        $statement = $pdo->prepare(
-            'INSERT INTO products (name, link, description, tags, image_url, is_recommended, sort_order, created_at, updated_at)
-             VALUES (:name, :link, :description, :tags, :image_url, :is_recommended, :sort_order, :created_at, :updated_at)'
-        );
-
-        foreach ($products as [$name, $link, $description, $tags, $imageUrl, $isRecommended, $sortOrder]) {
-            $statement->execute([
-                ':name' => $name,
-                ':link' => $link,
-                ':description' => $description,
-                ':tags' => $tags,
-                ':image_url' => $imageUrl,
-                ':is_recommended' => $isRecommended,
-                ':sort_order' => $sortOrder,
-                ':created_at' => $timestamp,
-                ':updated_at' => $timestamp,
-            ]);
-        }
-    }
-
-    if ((int) $pdo->query('SELECT COUNT(*) FROM team_members')->fetchColumn() === 0) {
-        $members = [
-            ['SR思锐 开发者', 'https://avatars.githubusercontent.com/u/89620382?v=4', '创始成员兼CEO', '统筹、管理、策划并驱动项目迭代。', 10],
-            ['Songyuhao', 'https://avatars.githubusercontent.com/u/65804940?v=4', '运维兼CTO', '基础设施维护与综合项目体验。', 20],
-            ['LittleDream', 'http://q.qlogo.cn/headimg_dl?dst_uin=2089949602&spec=640', '游戏部', '用 PyGame 点燃创意实践。', 30],
-            ['kizunerwe', 'http://q.qlogo.cn/headimg_dl?dst_uin=3341771757&spec=640', '高级运维工程师', '从端到端的运维支持与项目维护。', 40],
-            ['桃子', 'http://q.qlogo.cn/headimg_dl?dst_uin=2822554898&spec=640', '简儿 AI', '简儿 QQ 机器人项目核心技术与负责人。', 50],
-            ['Ariakage', 'https://avatars.githubusercontent.com/u/61618153?v=4', '创新技术核心', '从AI到项目，从运维到运营，从技术到创新。', 60],
-            ['路人Ray', 'http://q.qlogo.cn/headimg_dl?dst_uin=3357559641&spec=640', '交互体验设计', '从UI到海报，都是他的拿手好戏。', 70],
-        ];
-
-        $statement = $pdo->prepare(
-            'INSERT INTO team_members (name, avatar_url, position, bio, sort_order, created_at, updated_at)
-             VALUES (:name, :avatar_url, :position, :bio, :sort_order, :created_at, :updated_at)'
-        );
-
-        foreach ($members as [$name, $avatarUrl, $position, $bio, $sortOrder]) {
-            $statement->execute([
-                ':name' => $name,
-                ':avatar_url' => $avatarUrl,
-                ':position' => $position,
-                ':bio' => $bio,
-                ':sort_order' => $sortOrder,
-                ':created_at' => $timestamp,
-                ':updated_at' => $timestamp,
-            ]);
-        }
-    }
-
+    // 安装后不再自动写入首页示例数据，首页内容统一由后台手动配置。
+    unset($pdo);
 }
 
 function sr_create_initial_admin(string $username, string $password, string $email, string $qq = ''): void
 {
-    $pdo = sr_db();
+    sr_create_initial_admin_with_pdo(sr_db(), $username, $password, $email, $qq);
+}
+
+function sr_create_initial_admin_with_pdo(PDO $pdo, string $username, string $password, string $email, string $qq = ''): void
+{
     if ((int) $pdo->query('SELECT COUNT(*) FROM admins')->fetchColumn() > 0) {
         throw new RuntimeException('管理员已存在，不能重复创建初始管理员。');
     }
@@ -551,7 +505,7 @@ function sr_require_installation(): void
 {
     if (!sr_is_installed()) {
         sr_flash('error', '请先完成后台安装。');
-        sr_redirect('/SR-Admin/install.php');
+        sr_redirect(sr_install_url());
     }
 }
 
@@ -579,7 +533,7 @@ function sr_require_login(): array
     $admin = sr_current_admin();
     if ($admin === null) {
         sr_flash('error', '请先登录后台。');
-        sr_redirect('/SR-Admin/login.php');
+        sr_redirect(sr_admin_url('login.php'));
     }
 
     return $admin;
@@ -753,16 +707,16 @@ function sr_fetch_all(string $tableName): array
 function sr_admin_menu_items(): array
 {
     return [
-        'dashboard' => ['label' => '数据总览', 'href' => '/SR-Admin/index.php'],
-        'navigation' => ['label' => '导航管理', 'href' => '/SR-Admin/navigation.php'],
-        'hero' => ['label' => 'Hero 管理', 'href' => '/SR-Admin/hero.php'],
-        'products' => ['label' => '产品管理', 'href' => '/SR-Admin/products.php'],
-        'community' => ['label' => '社区管理', 'href' => '/SR-Admin/community.php'],
-        'members' => ['label' => '成员管理', 'href' => '/SR-Admin/members.php'],
-        'contact' => ['label' => '联系我们', 'href' => '/SR-Admin/contact.php'],
-        'footer' => ['label' => '页脚管理', 'href' => '/SR-Admin/footer.php'],
-        'admins' => ['label' => '管理员', 'href' => '/SR-Admin/admins.php'],
-        'logs' => ['label' => '操作日志', 'href' => '/SR-Admin/logs.php'],
+        'dashboard' => ['label' => '数据总览', 'href' => sr_admin_url('index.php')],
+        'navigation' => ['label' => '导航管理', 'href' => sr_admin_url('navigation.php')],
+        'hero' => ['label' => 'Hero 管理', 'href' => sr_admin_url('hero.php')],
+        'products' => ['label' => '产品管理', 'href' => sr_admin_url('products.php')],
+        'community' => ['label' => '社区管理', 'href' => sr_admin_url('community.php')],
+        'members' => ['label' => '成员管理', 'href' => sr_admin_url('members.php')],
+        'contact' => ['label' => '联系我们', 'href' => sr_admin_url('contact.php')],
+        'footer' => ['label' => '页脚管理', 'href' => sr_admin_url('footer.php')],
+        'admins' => ['label' => '管理员', 'href' => sr_admin_url('admins.php')],
+        'logs' => ['label' => '操作日志', 'href' => sr_admin_url('logs.php')],
     ];
 }
 
@@ -1098,6 +1052,70 @@ function sr_delete_managed_product_image(string $imageUrl): void
     }
 }
 
+function sr_get_available_product_images(): array
+{
+    if (!is_dir(SR_PRODUCT_IMAGE_ABSOLUTE_DIR)) {
+        return [];
+    }
+
+    $images = [];
+    $files = @scandir(SR_PRODUCT_IMAGE_ABSOLUTE_DIR);
+    if ($files === false) {
+        return [];
+    }
+
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..') {
+            continue;
+        }
+
+        $filePath = SR_PRODUCT_IMAGE_ABSOLUTE_DIR . DIRECTORY_SEPARATOR . $file;
+        if (!is_file($filePath)) {
+            continue;
+        }
+
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+            continue;
+        }
+
+        $relativePath = SR_PRODUCT_IMAGE_RELATIVE_DIR . '/' . $file;
+        $images[] = [
+            'filename' => $file,
+            'path' => $relativePath,
+            'size' => @filesize($filePath) ?: 0,
+            'modified' => @filemtime($filePath) ?: 0,
+        ];
+    }
+
+    usort($images, static fn($a, $b) => $b['modified'] <=> $a['modified']);
+    return $images;
+}
+
+function sr_normalize_image_url(string $input): string
+{
+    $input = trim($input);
+    if ($input === '') {
+        throw new RuntimeException('图片路径不能为空。');
+    }
+
+    if (preg_match('#^https?://#i', $input)) {
+        if (!filter_var($input, FILTER_VALIDATE_URL)) {
+            throw new RuntimeException('图片 URL 格式不正确。');
+        }
+        return $input;
+    }
+
+    $normalized = str_replace('\\', '/', $input);
+    $normalized = ltrim($normalized, '/');
+
+    if (!preg_match('#^[a-zA-Z0-9/_.\-]+$#', $normalized)) {
+        throw new RuntimeException('图片路径包含非法字符。');
+    }
+
+    return $normalized;
+}
+
 function sr_public_site_data(): array
 {
     if (!sr_is_installed()) {
@@ -1130,6 +1148,10 @@ function sr_public_site_data(): array
                 'contactLinks' => [],
                 'legalLinks' => [],
             ],
+            'visitStats' => [
+                'totalVisits' => 0,
+                'todayVisits' => 0,
+            ],
         ];
     }
 
@@ -1138,6 +1160,12 @@ function sr_public_site_data(): array
     $heroButtons = $pdo->query('SELECT label, link, color_class, icon_class, sort_order FROM hero_buttons ORDER BY sort_order ASC, id ASC')->fetchAll() ?: [];
     $products = $pdo->query('SELECT id, name, link, description, tags, image_url, is_recommended, sort_order FROM products ORDER BY sort_order ASC, id ASC')->fetchAll() ?: [];
     $members = $pdo->query('SELECT name, avatar_url, position, bio, sort_order FROM team_members ORDER BY sort_order ASC, id ASC')->fetchAll() ?: [];
+
+    $totalVisits = (int) $pdo->query('SELECT SUM(visit_count) FROM daily_visits')->fetchColumn();
+    $today = date('Y-m-d');
+    $statement = $pdo->prepare('SELECT visit_count FROM daily_visits WHERE visit_date = :visit_date');
+    $statement->execute([':visit_date' => $today]);
+    $todayVisits = (int) $statement->fetchColumn();
 
     return [
         'siteName' => sr_setting('site_name', 'SR思锐 团队'),
@@ -1211,6 +1239,10 @@ function sr_public_site_data(): array
             'communityLinks' => sr_parse_named_link_setting(sr_setting('footer_community_links')),
             'contactLinks' => sr_parse_named_link_setting(sr_setting('footer_contact_links')),
             'legalLinks' => sr_parse_named_link_setting(sr_setting('footer_legal_links')),
+        ],
+        'visitStats' => [
+            'totalVisits' => $totalVisits,
+            'todayVisits' => $todayVisits,
         ],
     ];
 }

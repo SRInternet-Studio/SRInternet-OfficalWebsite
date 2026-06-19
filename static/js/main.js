@@ -157,17 +157,6 @@ function initNav() {
     const currentScrollY = window.scrollY;
     const isScrollingDown = currentScrollY > lastScrollY;
     
-    // Hide/show logic
-    if (currentScrollY > 100) {
-      if (isScrollingDown && !nav?.classList.contains('is-open')) {
-        header.classList.add('is-hidden');
-      } else {
-        header.classList.remove('is-hidden');
-      }
-    } else {
-      header.classList.remove('is-hidden');
-    }
-
     // Background style logic
     if (currentScrollY > 20) {
       header.classList.add('is-scrolled');

@@ -5,11 +5,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
 
 if (!sr_is_installed()) {
-    sr_redirect('/SR-Admin/install.php');
+    sr_redirect(sr_install_url());
 }
 
 if (sr_current_admin() !== null) {
-    sr_redirect('/SR-Admin/index.php');
+    sr_redirect(sr_admin_url('index.php'));
 }
 
 $flash = sr_pull_flash();
@@ -23,14 +23,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
         if (!sr_attempt_login($account, $password)) {
             sr_flash('error', '账号或密码错误。');
-            sr_redirect('/SR-Admin/login.php');
+            sr_redirect(sr_admin_url('login.php'));
         }
 
         sr_flash('success', '登录成功，欢迎回来。');
-        sr_redirect('/SR-Admin/index.php');
+        sr_redirect(sr_admin_url('index.php'));
     } catch (Throwable $exception) {
         sr_flash('error', $exception->getMessage());
-        sr_redirect('/SR-Admin/login.php');
+        sr_redirect(sr_admin_url('login.php'));
     }
 }
 ?>
@@ -40,7 +40,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SR-Admin 登录</title>
-    <link rel="stylesheet" href="/SR-Admin/styles.css">
+    <link rel="stylesheet" href="<?= sr_escape(sr_admin_asset_url('styles.css')) ?>">
 </head>
 <body class="admin-login-page">
     <main class="login-shell">

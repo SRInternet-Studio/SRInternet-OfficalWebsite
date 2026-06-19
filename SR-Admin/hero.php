@@ -30,7 +30,7 @@ $adminPageDescription = '支持图标代码输入和常用图标快速选择。'
 require __DIR__ . '/partials/header.php';
 ?>
 <article class="form-card">
-    <form method="post" action="/SR-Admin/action.php" class="stack-form">
+    <form method="post" action="<?= sr_escape(sr_admin_url('action.php')) ?>" class="stack-form">
         <input type="hidden" name="csrf_token" value="<?= sr_escape($csrfToken) ?>">
         <input type="hidden" name="action" value="save_hero">
 
@@ -48,7 +48,7 @@ require __DIR__ . '/partials/header.php';
         <h3>Hero 按钮列表</h3>
         <p>默认显示按钮摘要，点击编辑后再修改按钮内容、链接、配色和图标。</p>
     </div>
-    <a class="btn-primary-solid" href="/SR-Admin/hero.php?mode=new">新增按钮</a>
+    <a class="btn-primary-solid" href="<?= sr_escape(sr_admin_url('hero.php')) ?>?mode=new">新增按钮</a>
 </section>
 
 <article class="form-card">
@@ -72,7 +72,7 @@ require __DIR__ . '/partials/header.php';
                         <td><code><?= sr_escape((string) $button['link']) ?></code></td>
                         <td><?= sr_escape((string) $button['color_class']) ?></td>
                         <td><?= (int) $button['sort_order'] ?></td>
-                        <td><a class="table-link" href="/SR-Admin/hero.php?edit=<?= (int) $button['id'] ?>">编辑</a></td>
+                        <td><a class="table-link" href="<?= sr_escape(sr_admin_url('hero.php')) ?>?edit=<?= (int) $button['id'] ?>">编辑</a></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -83,7 +83,7 @@ require __DIR__ . '/partials/header.php';
 <?php if ($isCreating || $editingButton !== null): ?>
     <article class="form-card add-card">
         <h3><?= $editingButton !== null ? '编辑 Hero 按钮' : '新增 Hero 按钮' ?></h3>
-        <form method="post" action="/SR-Admin/action.php" class="grid-form">
+        <form method="post" action="<?= sr_escape(sr_admin_url('action.php')) ?>" class="grid-form">
             <input type="hidden" name="csrf_token" value="<?= sr_escape($csrfToken) ?>">
             <input type="hidden" name="action" value="<?= $editingButton !== null ? 'update_hero_button' : 'add_hero_button' ?>">
             <?php if ($editingButton !== null): ?>
@@ -114,12 +114,12 @@ require __DIR__ . '/partials/header.php';
 
             <div class="action-row">
                 <button type="submit" class="btn-primary-solid"><?= $editingButton !== null ? '保存按钮' : '新增按钮' ?></button>
-                <a class="ghost-link" href="/SR-Admin/hero.php">返回列表</a>
+                <a class="ghost-link" href="<?= sr_escape(sr_admin_url('hero.php')) ?>">返回列表</a>
             </div>
         </form>
 
         <?php if ($editingButton !== null): ?>
-            <form method="post" action="/SR-Admin/action.php" class="inline-danger-form" onsubmit="return confirm('确认删除该按钮吗？');">
+            <form method="post" action="<?= sr_escape(sr_admin_url('action.php')) ?>" class="inline-danger-form" onsubmit="return confirm('确认删除该按钮吗？');">
                 <input type="hidden" name="csrf_token" value="<?= sr_escape($csrfToken) ?>">
                 <input type="hidden" name="action" value="delete_hero_button">
                 <input type="hidden" name="id" value="<?= (int) $editingButton['id'] ?>">

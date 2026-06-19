@@ -20,7 +20,7 @@ $adminPageDescription = '支持为联系邮箱和 GitHub 仓库录入多条数�
 require __DIR__ . '/partials/header.php';
 ?>
 <article class="form-card">
-    <form method="post" action="/SR-Admin/action.php" class="grid-form">
+    <form method="post" action="<?= sr_escape(sr_admin_url('action.php')) ?>" class="grid-form">
         <input type="hidden" name="csrf_token" value="<?= sr_escape($csrfToken) ?>">
         <input type="hidden" name="action" value="save_contact">
 
