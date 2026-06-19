@@ -50,16 +50,25 @@ function renderNavigation(data) {
   const navList = document.getElementById('nav-list');
   if (!navList) return;
 
-  const navigationItems = getArray(data.navigation);
+  var navigationItems = getArray(data.navigation);
   if (navigationItems.length === 0) {
     navList.innerHTML = '<li><a href="#home" aria-current="page">首页</a></li>';
     return;
   }
 
-  navList.innerHTML = navigationItems.map((item, index) => {
-    const ariaCurrent = index === 0 ? ' aria-current="page"' : '';
-    const attrs = buildLinkAttributes(item.link, Boolean(item.openInNewTab));
-    return `<li><a ${attrs}${ariaCurrent}>${escapeHtml(item.name)}</a></li>`;
+  var currentHash = window.location.hash || '#home';
+
+  navList.innerHTML = navigationItems.map(function (item) {
+    var isSamePageLink = item.link && item.link.indexOf('#') === 0;
+    var isActive = false;
+    if (isSamePageLink) {
+      if (item.link === currentHash) {
+        isActive = true;
+      }
+    }
+    var ariaCurrent = isActive ? ' aria-current="page"' : '';
+    var attrs = buildLinkAttributes(item.link, Boolean(item.openInNewTab));
+    return '<li><a ' + attrs + ariaCurrent + '>' + escapeHtml(item.name) + '</a></li>';
   }).join('');
 }
 

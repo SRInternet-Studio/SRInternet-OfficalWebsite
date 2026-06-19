@@ -167,17 +167,18 @@ function initNav() {
     lastScrollY = currentScrollY;
   }
 
-  const navLinksList = document.querySelectorAll('.nav-links a[href^="#"]');
-  const sections = Array.from(navLinksList).map(link => {
-    const target = document.querySelector(link.getAttribute('href'));
-    return { link, target };
-  }).filter(item => item.target);
-
   function handleScrollSpy() {
     const scrollPosition = window.scrollY + window.innerHeight / 3;
 
+    // 每次重新获取导航链接和对应区域，以适应动态渲染的导航内容
+    const currentNavLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+    const currentSections = Array.from(currentNavLinks).map(function (link) {
+      const target = document.querySelector(link.getAttribute('href'));
+      return { link: link, target: target };
+    }).filter(function (item) { return item.target; });
+
     let currentActiveIndex = -1;
-    sections.forEach((item, index) => {
+    currentSections.forEach((item, index) => {
       const top = item.target.offsetTop;
       const bottom = top + item.target.offsetHeight;
       if (scrollPosition >= top && scrollPosition < bottom) {
@@ -186,7 +187,7 @@ function initNav() {
     });
 
     if ((window.innerHeight + Math.round(window.scrollY)) >= document.body.offsetHeight - 50) {
-      currentActiveIndex = sections.length - 1;
+      currentActiveIndex = currentSections.length - 1;
     }
 
     if (currentActiveIndex !== -1) {
@@ -195,14 +196,14 @@ function initNav() {
           link.removeAttribute('aria-current');
         }
       });
-      sections[currentActiveIndex].link.setAttribute('aria-current', 'page');
-    } else if (window.scrollY < 100 && sections.length > 0) {
+      currentSections[currentActiveIndex].link.setAttribute('aria-current', 'page');
+    } else if (window.scrollY < 100 && currentSections.length > 0) {
       document.querySelectorAll('.nav-links a').forEach(link => {
         if (link.getAttribute('href').startsWith('#')) {
           link.removeAttribute('aria-current');
         }
       });
-      sections[0].link.setAttribute('aria-current', 'page');
+      currentSections[0].link.setAttribute('aria-current', 'page');
     }
   }
 

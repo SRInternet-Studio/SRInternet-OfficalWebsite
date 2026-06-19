@@ -285,6 +285,14 @@ html[data-theme="light"] .card {
   background: transparent;
 }
 
+html[data-theme="light"] .card::after {
+  border-color: rgba(15, 23, 42, 0.04);
+}
+
+html[data-theme="light"] .card:hover::after {
+  border-color: rgba(124, 108, 255, 0.10);
+}
+
 html[data-theme="light"] .team-card:hover {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 246, 255, 1));
 }
@@ -300,27 +308,16 @@ html[data-theme="light"] .ad-wrapper[data-priority="high"] {
 }
 
 html[data-theme="light"] .tag {
-  border-color: rgba(15, 23, 42, 0.1);
-  background: rgba(255, 255, 255, 0.5);
-  color: var(--text-200);
-}
-
-html[data-theme="light"] .tag:nth-child(3n+1) {
-  border-color: rgba(124, 108, 255, 0.3);
-  background: linear-gradient(135deg, rgba(124, 108, 255, 0.1), rgba(124, 108, 255, 0.05));
+  border-color: rgba(124, 108, 255, 0.35);
+  background: transparent;
   color: var(--primary);
 }
 
-html[data-theme="light"] .tag:nth-child(3n+2) {
-  border-color: rgba(53, 210, 194, 0.3);
-  background: linear-gradient(135deg, rgba(53, 210, 194, 0.1), rgba(53, 210, 194, 0.05));
-  color: var(--accent-dark);
-}
-
+html[data-theme="light"] .tag:nth-child(3n+1),
+html[data-theme="light"] .tag:nth-child(3n+2),
 html[data-theme="light"] .tag:nth-child(3n) {
-  border-color: rgba(251, 114, 153, 0.3);
-  background: linear-gradient(135deg, rgba(251, 114, 153, 0.1), rgba(251, 114, 153, 0.05));
-  color: var(--bilibili);
+  border-color: rgba(124, 108, 255, 0.35);
+  color: var(--primary);
 }
 
 html[data-theme="light"] .community-card {
