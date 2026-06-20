@@ -9,8 +9,10 @@ try {
     if (sr_is_installed()) {
         $today = date('Y-m-d');
         $pdo = sr_db();
-        $pdo->exec("INSERT OR IGNORE INTO daily_visits (visit_date, visit_count) VALUES ('$today', 0)");
-        $pdo->exec("UPDATE daily_visits SET visit_count = visit_count + 1 WHERE visit_date = '$today'");
+        $stmt = $pdo->prepare("INSERT OR IGNORE INTO daily_visits (visit_date, visit_count) VALUES (:date, 0)");
+        $stmt->execute([':date' => $today]);
+        $stmt = $pdo->prepare("UPDATE daily_visits SET visit_count = visit_count + 1 WHERE visit_date = :date");
+        $stmt->execute([':date' => $today]);
     }
 
     sr_json_response(200, [

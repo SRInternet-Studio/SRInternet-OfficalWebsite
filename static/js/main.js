@@ -322,7 +322,7 @@ function initAdSystem() {
   if (!adSection) return;
 
   const adConfig = {
-    enabled: true,
+    enabled: false,
     apiEndpoint: '/api/ads.php',
     expiryDate: new Date('2026-02-27T23:59:59+08:00'),
     fallbackAd: {
@@ -483,6 +483,10 @@ function initAdSystem() {
       });
 
       if (!response.ok) {
+        if (response.status === 404) {
+          console.info('Advertisement API endpoint not found; using fallback ad.');
+          return [adConfig.fallbackAd];
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -518,6 +522,11 @@ function initAdSystem() {
   }
 
   async function initialize() {
+    if (!adConfig.enabled) {
+      adSection?.classList.remove('is-visible');
+      return;
+    }
+
     try {
       const ads = await fetchAdsFromBackend();
       const visibleAds = ads.filter(ad => shouldShowAd(ad));

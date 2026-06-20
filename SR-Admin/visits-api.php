@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
 
 sr_require_login();
+sr_verify_csrf($_GET['csrf_token'] ?? null);
 
 $daysInMonthFor = static function (int $year, int $month): int {
     return (int) (new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))->format('t');

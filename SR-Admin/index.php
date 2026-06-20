@@ -8,6 +8,7 @@ sr_require_installation();
 
 $admin = sr_require_login();
 $flash = sr_pull_flash();
+$csrfToken = sr_csrf_token();
 
 try {
     $navigationItems = sr_fetch_all('navigation_items');
@@ -564,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chartLoading.style.display = 'flex';
         
         try {
-            const response = await fetch(`visits-api.php?view=${currentView}&date=${encodeURIComponent(dateParam)}`);
+            const response = await fetch(`visits-api.php?view=${currentView}&date=${encodeURIComponent(dateParam)}&csrf_token=<?= sr_escape($csrfToken) ?>`);
             const responseText = await response.text();
             let data;
 
